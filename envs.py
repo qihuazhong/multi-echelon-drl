@@ -1,4 +1,3 @@
-import logging
 from abc import ABC
 from typing import Union, Tuple, List, Any, Dict
 import numpy as np
@@ -15,19 +14,16 @@ from gym.utils import seeding
 class InventoryManagementEnvMultiFacility(ABC, gym.Env):
 
     def __init__(self, supply_network, max_episode_steps: int, action_space: gym.Space,
-                 observation_space: gym.Space, visible_states=None, return_dict=False):
+                 observation_space: gym.Space, return_dict=False):
         """
         Args:
             supply_network:
-            visible_states: A string or a list of strings. Limit the states that are visible to the agent. Return
-            all states when not provided.
             return_dict: whether the return states is a numpy array(Default) or a dictionary
         """
         self.sn: SupplyNetwork = supply_network
         self.max_episode_steps = max_episode_steps
         self.action_space = action_space
         self.observation_space = observation_space
-        self.visible_states = visible_states
         self.return_dict = return_dict
         self.period = 0
         self.terminal = False
@@ -86,8 +82,8 @@ class InventoryManagementEnvMultiFacility(ABC, gym.Env):
         return [seed]
 
 
-def make_beer_game_normal_multi_facility(agent_managed_facilities=None, max_episode_steps=100, return_dict=False,
-                                         random_init=False, box_action_space=False):
+def make_beer_game_basic(agent_managed_facilities=None, max_episode_steps=100, return_dict=False,
+                         random_init=False, box_action_space=False):
     if agent_managed_facilities is None:
         agent_managed_facilities = ['retailer']
 
@@ -162,8 +158,8 @@ def make_beer_game_normal_multi_facility(agent_managed_facilities=None, max_epis
                                                observation_space=observation_space, return_dict=return_dict)
 
 
-def make_beer_game_uniform_multi_facility(agent_managed_facilities=None, max_episode_steps=100, return_dict=False,
-                                          random_init=True, box_action_space=False):
+def make_beer_game_complex(agent_managed_facilities=None, max_episode_steps=100, return_dict=False,
+                           random_init=True, box_action_space=False):
     if agent_managed_facilities is None:
         agent_managed_facilities = ['retailer', 'wholesaler', 'distributor', 'manufacturer']
 

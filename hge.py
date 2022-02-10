@@ -1,6 +1,3 @@
-import sys
-import os
-from abc import ABC
 from typing import Optional, Tuple, Union, Type, Dict, Any
 
 import numpy as np
@@ -10,14 +7,11 @@ from stable_baselines3.common.preprocessing import maybe_transpose
 from stable_baselines3.common.type_aliases import GymEnv, Schedule
 from stable_baselines3.common.utils import is_vectorized_observation
 from stable_baselines3.td3.policies import TD3Policy
-
-# sys.path.append(os.path.abspath(os.path.join('..')) + "/snim")
-
 from utils.heuristics import InventoryPolicy
 
 import gym
 from stable_baselines3 import TD3
-from stable_baselines3.common.noise import NormalActionNoise, ActionNoise
+from stable_baselines3.common.noise import ActionNoise
 
 
 class HgeTD3(TD3):

@@ -90,17 +90,14 @@ class Arc:
         target (str): name of the customer node_name
         sales_orders (OrderList): A list of sales orders
 
-        ordering_cost (float): A fixed cost that incurs everytime an order is placed regardless of the order quantity. (TODO)
-
 
     """
-    HISTORY_LEN = 4  # TODO
+    HISTORY_LEN = 4
 
     def __init__(self, source: str, target: str, information_leadtime, shipment_leadtime,
                  initial_shipments: Optional[List] = None, initial_sales_orders: Optional[List] = None,
                  initial_previous_orders=None,
-                 random_init=False,
-                 ordering_cost: float = .0):
+                 random_init=False):
         self.source = source
         self.target = target
         self.information_leadtime = information_leadtime
