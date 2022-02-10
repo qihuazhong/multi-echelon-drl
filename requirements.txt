@@ -1,0 +1,6 @@
+numpy>=1.19.5
+pandas
+torch
+PyYAML>=6.0
+stable-baselines3
+tensorboard

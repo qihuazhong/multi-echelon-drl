@@ -1,0 +1,19 @@
+environment:
+  role: MultiFacility # should one of Retailer, Wholesaler, Distributor, Manufacturer or MultiFacility
+  scenario: complex # complex or basic
+  ordering_rule: a # a or d+a
+
+runs: 3
+max_time_steps: 500000
+
+hyperparameters:
+  # Example hyperparamters for TD3
+  td3:
+    batch_size: 128
+    network_width: 256
+    learning_rate: 0.0003
+    tau: 0.01
+    train_freq: 32
+    action_noise_std: 0.3
+    gamma: 0.95
+    hge_rate_at_start: 0.5 # Use 0.0 for no Heuristic guided exploration
