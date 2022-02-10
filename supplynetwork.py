@@ -83,8 +83,8 @@ class SupplyNetwork:
             arc.reset()
 
             if aec:
-                last = arc.unreceived_quantities.pop()
-                arc.unreceived_quantities[-1] += last
+                last = arc.in_tansit_quantities.pop()
+                arc.in_tansit_quantities[-1] += last
 
         self.current_cost = 0
 
@@ -129,9 +129,9 @@ class SupplyNetwork:
                        'latest_demand': latest_demand,
                        }
 
-        assert(-0.001 < on_order - sum([sum(arc.unreceived_quantities) for arc in upstream_arcs]) < 0.001)
+        assert(-0.001 < on_order - sum([sum(arc.in_tansit_quantities) for arc in upstream_arcs]) < 0.001)
 
-        unreceived_quantity_pipeline = {f'unreceived_pipeline_{i}': arc.unreceived_quantities[i]
+        unreceived_quantity_pipeline = {f'unreceived_pipeline_{i}': arc.in_tansit_quantities[i]
                                         for arc in upstream_arcs for i in range(M)}
 
         states_dict = {**states_dict, **unreceived_quantity_pipeline}
@@ -159,8 +159,8 @@ class SupplyNetwork:
                 self.nodes[supplier].latest_demand = []
                 self.nodes[supplier].latest_demand.append(latest_demand)
 
-                last = arc.unreceived_quantities.pop()
-                arc.unreceived_quantities[-1] += last
+                last = arc.in_tansit_quantities.pop()
+                arc.in_tansit_quantities[-1] += last
 
         for node in self.order_sequence[:min(self.agent_indexes)]:
 
@@ -201,10 +201,10 @@ class SupplyNetwork:
                 self.nodes[customer].current_inventory += arrived_quantity
 
                 consumed = 0
-                for i in range(len(arc.unreceived_quantities)-1, -1, -1):
+                for i in range(len(arc.in_tansit_quantities) - 1, -1, -1):
                     if arrived_quantity - consumed > 0:
-                        filled_qty = min(arc.unreceived_quantities[i], arrived_quantity - consumed)
-                        arc.unreceived_quantities[i] -= filled_qty
+                        filled_qty = min(arc.in_tansit_quantities[i], arrived_quantity - consumed)
+                        arc.in_tansit_quantities[i] -= filled_qty
                         consumed += filled_qty
 
             self.nodes[node].unfilled_demand = 0

@@ -140,7 +140,7 @@ class Arc:
 
         self.previous_orders = ([0] * 4 + shmts + sos)[::-1][:self.HISTORY_LEN]
 
-        self.unreceived_quantities = ([0] * 4 + shmts + sos)[::-1][:self.HISTORY_LEN+1]
+        self.in_tansit_quantities = ([0] * 4 + shmts + sos)[::-1][:self.HISTORY_LEN + 1]
 
     def keep_order_history(self, order_quantity):
         """Track order history for reporting state
@@ -325,5 +325,5 @@ class Node:
 
         arc.sales_orders.append(new_order)
 
-        arc.unreceived_quantities.insert(0, order_quantity)
+        arc.in_tansit_quantities.insert(0, order_quantity)
         self.order_history.append(order_quantity)
