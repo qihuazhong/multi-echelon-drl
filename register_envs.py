@@ -1,4 +1,5 @@
-# A script to
+# A script to register different versions of the beer game to the Gym Registry,
+# so the environments can be created using gym.make()
 
 import gym
 
