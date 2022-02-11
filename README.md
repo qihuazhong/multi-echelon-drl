@@ -2,11 +2,15 @@
 Solving Multi-Echelon Inventory Management Problems with Heuristic-Guided Deep Reinforcement Learning
 
 Recommended Python version: 3.9
+
+## Training DRL agents
+
+The experiments setup and hyperparameters of the DRL algorithm should be defined in a YAML file.  Examples of experiments setup files can be found at `setup_exmaple_centralized.yaml` and `setup_exmaple_decentralized.yaml`
+
+
 ## Usage Examples
 
-Samples of experiments setup files can be found at `setup_exmaple_centralized.yaml` and `setup_exmaple_decentralized.yaml`
-
-To train a TD3 agent with heuristic guided exploration (HGE), simply run the train script 
+To train a TD3 agent with heuristic guided exploration (HGE), simply run the train script with the YAML file as the first argument:
 ```commandline
 python train_td3.py setup_exmaple_centralized.yaml
 ```
