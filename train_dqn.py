@@ -1,4 +1,4 @@
-import sys
+import argparse
 import yaml
 from utils.wrappers import wrap_action_d_plus_a
 from register_envs import register_envs
@@ -10,11 +10,20 @@ from stable_baselines3.common.vec_env import VecNormalize
 from stable_baselines3.common.callbacks import EvalCallback
 
 
-def main(setup_file: str):
+def main():
+    parser = argparse.ArgumentParser()
 
-    with open(setup_file) as fh:
+    # Adding required argument
+    parser.add_argument("-e", help="Path to the experiment setup file (.yaml)", required=True)
+    parser.add_argument("--name", help="Name of the experiment. Used as a prefix saving log files and models to avoid "
+                                       "overwriting previous experiment outputs",
+                        default='', required=False)
+
+    # Read arguments from command line
+    args = parser.parse_args()
+
+    with open(args.e) as fh:
         setup = yaml.load(fh, Loader=yaml.FullLoader)
-
     environment = setup['environment']
 
     if environment['role'] == 'MultiFacility':
@@ -49,7 +58,7 @@ def main(setup_file: str):
 
     for run in range(setup['runs']+1):
 
-        exp_name = f"DQN_{environment['role']}_{environment['scenario']}_{environment['ordering_rule']}_{run}"
+        exp_name = f"{args.name}_DQN_{environment['role']}_{environment['scenario']}_{environment['ordering_rule']}_{run}"
         env = VecNormalize(make_vec_env(env_factory, n_env), clip_obs=100, clip_reward=1000)
         eval_env = VecNormalize(make_vec_env(env_factory, n_env), clip_obs=100, clip_reward=1000)
 
@@ -80,12 +89,6 @@ def main(setup_file: str):
                     callback=eval_callback,
                     reset_num_timesteps=True)
 
-        # save the vectorized environment (along with the normalizing statistics)
-        env.save(f'./best_models/{exp_name}/vec_env')
-
 
 if __name__ == '__main__':
-    if len(sys.argv) > 1:
-        main(sys.argv[1])
-    else:
-        raise ValueError(f'Need the path to a setup file (YAML) as the first argument')
+    main()
