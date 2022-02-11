@@ -57,7 +57,7 @@ def main(setup_file: str):
         else:
             raise ValueError
 
-    for run in range(setup['runs']):
+    for run in range(setup['runs']+1):
         exp_name = f"TD3_{environment['role']}_{environment['scenario']}_{environment['ordering_rule']}_{run}"
         env = VecNormalize(make_vec_env(env_factory, n_env), clip_obs=100, clip_reward=1000)
         eval_env = VecNormalize(make_vec_env(env_factory, n_env), clip_obs=100, clip_reward=1000)
