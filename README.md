@@ -3,6 +3,17 @@ Solving Multi-Echelon Inventory Management Problems with Heuristic-Guided Deep R
 
 Recommended Python version: 3.9
 
+## Installation
+
+```commandline
+git clone https://github.com/qihuazhong/multi-echelon-drl.git
+```
+
+To install the required packages:
+```commandline
+pip install --upgrade -r requirements.txt
+```
+
 ## Training DRL agents
 
 The experiments setup and hyperparameters of the DRL algorithm should be defined in a YAML file.  Examples of experiments setup files can be found at `setup_exmaple_centralized.yaml` and `setup_exmaple_decentralized.yaml`
