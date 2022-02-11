@@ -103,3 +103,5 @@ def main(setup_file: str):
 if __name__ == '__main__':
     if len(sys.argv) > 1:
         main(sys.argv[1])
+    else:
+        raise ValueError(f'Need the path to a setup file (YAML) as the first argument')
