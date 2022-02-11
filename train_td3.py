@@ -31,8 +31,6 @@ def main(setup_file: str):
     else:
         raise ValueError
 
-
-
     params = setup['hyperparameters']['td3']
 
     if params['hge_rate_at_start'] > 0 and environment['role'] != 'MultiFacility':

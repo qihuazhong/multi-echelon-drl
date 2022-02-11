@@ -1,9 +1,8 @@
 import sys
 import yaml
-import numpy as np
 from utils.wrappers import wrap_action_d_plus_a
 from register_envs import register_envs
-from utils.callbacks import  SaveEnvStatsCallback
+from utils.callbacks import SaveEnvStatsCallback
 import gym
 from stable_baselines3 import DQN
 from stable_baselines3.common.env_util import make_vec_env

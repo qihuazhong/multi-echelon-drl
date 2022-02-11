@@ -1,6 +1,5 @@
 import sys
 import yaml
-import numpy as np
 from utils.wrappers import wrap_action_d_plus_a
 from register_envs import register_envs
 from utils.callbacks import  SaveEnvStatsCallback
