@@ -38,7 +38,7 @@ def main():
     else:
         raise ValueError
 
-    params = setup['hyperparameters']
+    params = setup['hyperparameters']['dqn']
 
     env_name = f"BeerGame{demand_type}{environment['role']}Discrete-v0"
 
