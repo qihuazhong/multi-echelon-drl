@@ -90,14 +90,17 @@ class Arc:
         target (str): name of the customer node_name
         sales_orders (OrderList): A list of sales orders
 
+        ordering_cost (float): A fixed cost that incurs everytime an order is placed regardless of the order quantity. (TODO)
+
 
     """
-    HISTORY_LEN = 4
+    HISTORY_LEN = 4  # TODO
 
     def __init__(self, source: str, target: str, information_leadtime, shipment_leadtime,
                  initial_shipments: Optional[List] = None, initial_sales_orders: Optional[List] = None,
                  initial_previous_orders=None,
-                 random_init=False):
+                 random_init=False,
+                 ordering_cost: float = .0):
         self.source = source
         self.target = target
         self.information_leadtime = information_leadtime
@@ -119,7 +122,7 @@ class Arc:
             shmts = [np.random.randint(self.initial_shipments[0], self.initial_shipments[1]) for t in
                      range(self.shipment_leadtime)]
         else:
-            shmts = self.initial_shipments[:self.shipment_leadtime]
+            shmts = self.initial_shipments[:self.shipment_leadtime]  # TODO check length
 
         self.shipments = ShipmentList(
             [Shipment(shmts[t], t + 1) for t in range(self.shipment_leadtime)])
@@ -130,14 +133,16 @@ class Arc:
             sos = [np.random.randint(self.initial_SOs[0], self.initial_SOs[1]) for t in
                    range(self.information_leadtime)]
         else:
-            sos = self.initial_SOs[:self.information_leadtime]
+            sos = self.initial_SOs[:self.information_leadtime]  # TODO check length
 
         self.sales_orders = OrderList(
             [Order(sos[t], 0, t + 1) for t in range(self.information_leadtime)])
 
+        # TODO
         self.previous_orders = ([0] * 4 + shmts + sos)[::-1][:self.HISTORY_LEN]
 
-        self.in_tansit_quantities = ([0] * 4 + shmts + sos)[::-1][:self.HISTORY_LEN + 1]
+        self.unreceived_quantities = ([0] * 4 + shmts + sos)[::-1][:self.HISTORY_LEN+1]
+        # print(f'unreceived_quantities: {self.unreceived_quantities}')
 
     def keep_order_history(self, order_quantity):
         """Track order history for reporting state
@@ -193,6 +198,8 @@ class Arc:
                 if quantity > 0:
                     self.shipments.append(Shipment(quantity, self.shipment_leadtime))
                     so.shipped_quantity += quantity
+
+                    # print(f"{self.source} ships {quantity}")
 
                 if not node.is_external_supplier:
                     node.current_inventory -= quantity
@@ -272,12 +279,16 @@ class Node:
         self.holding_cost_history = []
         self.order_history = []
 
+        self.last_backlog = 0
+
         self.current_external_demand = 0
         if self.is_demand_source:
             self.demands.reset()
             self.demand_gen = self.demands.generator()
             self.current_external_demand = next(self.demand_gen)
 
+    # TODO: In future versions, observing and filling independent demand should be implemented as receiving and filling
+    #  an immediate order from an external node generated exclusively for the purpose of issuing independent demand
     def fill_independent_demand(self) -> float:
         """Fulfills (ships) outstanding independent demand
 
@@ -287,21 +298,32 @@ class Node:
         """
         if self.is_demand_source:
             quantity = max(0, min(self.current_inventory, self.current_external_demand + self.unfilled_independent_demand))
+            # if quantity > 0:
             self.current_inventory -= quantity
 
             unfilled_quantity = self.current_external_demand + self.unfilled_independent_demand - quantity
+
             self.unfilled_independent_demand = unfilled_quantity
 
         else:
             raise RuntimeError('A node can only fulfill independent demand when is_demand_source is True')
 
+        # print(f"{self.name} ships {quantity}")
         return self.unfilled_independent_demand
 
     def update_demand(self):
         self.current_external_demand = next(self.demand_gen)
 
+    def update_last_backlog(self):
+        self.last_backlog = self.unfilled_demand
+
     def place_order(self, obs: Union[dict, np.ndarray], arc: Arc, order_quantity=None):
         """Place an order for the specified arc, and update the list of sales orders
+
+        TODO: this method should be moved to the the Arc class to support more granular action (i.e. order per arc)
+
+
+
         """
 
         if order_quantity is None:
@@ -322,5 +344,5 @@ class Node:
 
         arc.sales_orders.append(new_order)
 
-        arc.in_tansit_quantities.insert(0, order_quantity)
+        arc.unreceived_quantities.insert(0, order_quantity)
         self.order_history.append(order_quantity)

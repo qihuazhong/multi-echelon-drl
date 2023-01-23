@@ -31,3 +31,16 @@ def wrap_action_d_plus_a(env, offset=-8, lb: int = 0, ub: int = 16):
     return env
 
 
+# def d_plus_a(states: Union[List[dict], np.ndarray], action: np.ndarray, offset: int = 0,
+#              state_dim: int = None,
+#              demand_index: int = None):
+#     if isinstance(states, list):
+#         modified_action = np.array([state['latest_demand'] for state in states]) + action + offset
+#     elif isinstance(states, np.ndarray):
+#         modified_action = np.array([states[i] for i in range(demand_index, state_dim, states.size)]) + action + offset
+#     else:
+#         raise TypeError(f'states must be type of list of dict or numpy.ndarray')
+#
+#     return np.maximum(modified_action, 0)
+
+
