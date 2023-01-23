@@ -6,3 +6,6 @@ utils/__pycache__/
 .idea/
 
 __pycache__/
+best_models/
+logs/
+tensorboard/
