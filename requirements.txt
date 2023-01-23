@@ -2,5 +2,6 @@ numpy>=1.19.5
 pandas
 torch
 PyYAML>=6.0
-stable-baselines3>=1.4.0
+stable-baselines3>=1.7.0
+gym==0.21.0
 tensorboard
