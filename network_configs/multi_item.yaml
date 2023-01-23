@@ -1,0 +1,58 @@
+# Network configuration file
+# Define the nodes, arcs and their attributes in a supply network
+
+# TODO
+# when multiple items exist, the corresponding attributes of the nodes (holding cost, backorder_cost)
+# and of the ars (production_leadtime) needs to be a list with the same length as the item list.
+items:
+  - name: item_1
+  - name: item_2
+
+
+nodes:
+  - name: retailer # name of the node_name
+    holding_cost: [0.5, 0.75]
+    backorder_cost: [1, 1]
+    # If a demand_path is given, the node_name would generate independent (i.e. receive external) demand
+    demand_path: "snim/data/deepbeerinventory/demandTr0-9.npy"
+  - name: wholesaler
+    holding_cost: [0.5, 0.75]
+    backorder_cost: [1, 1]
+  - name: distributor
+    holding_cost: [0.5, 0.75]
+    backorder_cost: [1, 1]
+  - name: manufacturer
+    holding_cost: [0.5, 0.75]
+    backorder_cost: [1, 1]
+    # It is also possible to specify a fixed setup_cost. If omitted, it is defaulted to 0
+    # The fixed (e.g. administrative, production setup) cost of placing an order, regardless of the quantity
+    setup_cost: [0, 0]
+  - name: external_supplier
+    is_external_supplier: True
+
+
+arcs:
+  - customer: retailer
+    supplier: wholesaler
+    info_leadtime: 2
+    shipment_leadtime: 2
+    # TODO: Add the possibility to specify a fixed ordering cost associated with placing orders through this specific
+    #       arc, which is in addition to setup cost at the node_name, if there is any.
+    ordering_cost: 0
+  - customer: wholesaler
+    supplier: distributor
+    info_leadtime: 2
+    shipment_leadtime: 2
+    ordering_cost: 0
+  - customer: distributor
+    supplier: manufacturer
+    info_leadtime: 2
+#    TODO: Add the possibility to specify a production leadtime between after receiving order info and before shipping
+#    production_leadtime: 0
+    shipment_leadtime: 2
+    ordering_cost: 0
+  - customer: manufacturer
+    supplier: external_supplier
+    info_leadtime: 1
+    shipment_leadtime: 2
+    ordering_cost: 0
