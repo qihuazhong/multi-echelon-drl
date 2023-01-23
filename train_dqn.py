@@ -62,7 +62,7 @@ def main():
         env = VecNormalize(make_vec_env(env_factory, n_env), clip_obs=100, clip_reward=1000)
         eval_env = VecNormalize(make_vec_env(env_factory, n_env), clip_obs=100, clip_reward=1000)
 
-        policy_kwargs = dict(net_arch=[params['network_width']*2])
+        policy_kwargs = dict(net_arch=[params['network_width']*params['num_layers']])
 
         model = DQN('MlpPolicy', env,
                     learning_rate=params['learning_rate'],
@@ -72,15 +72,17 @@ def main():
                     policy_kwargs=policy_kwargs,
                     exploration_final_eps=0.05,
                     exploration_fraction=0.2,
-                    target_update_interval=100,
+                    target_update_interval=params['target_update_interval'],
+                    gradient_steps=1,
+                    buffer_size=params['buffer_size'],
                     tensorboard_log=f"./tensorboard/")
 
-        eval_callback = EvalCallback(eval_env,
+        eval_callback = EvalCallback(env,
                                      callback_on_new_best=SaveEnvStatsCallback(env_save_path=f"./best_models/{exp_name}/"),
                                      best_model_save_path=f"./best_models/{exp_name}/",
                                      log_path=f"./logs/{exp_name}/",
                                      eval_freq=5000,
-                                     n_eval_episodes=50,
+                                     n_eval_episodes=100,
                                      deterministic=True,
                                      render=False)
 

@@ -73,7 +73,7 @@ def main():
         env = VecNormalize(make_vec_env(env_factory, n_env), clip_obs=100, clip_reward=1000)
         eval_env = VecNormalize(make_vec_env(env_factory, n_env), clip_obs=100, clip_reward=1000)
 
-        policy_kwargs = dict(net_arch=[params['network_width'] * 2])
+        policy_kwargs = dict(net_arch=[params['network_width'] * params['num_layers']])
 
         n_actions = env.action_space.shape[-1]
         action_noise = NormalActionNoise(mean=np.zeros(n_actions),
@@ -98,7 +98,7 @@ def main():
                                      best_model_save_path=f"./best_models/{exp_name}/",
                                      log_path=f"./logs/{exp_name}/",
                                      eval_freq=5000,
-                                     n_eval_episodes=50,
+                                     n_eval_episodes=100,
                                      deterministic=True,
                                      render=False)
 

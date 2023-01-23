@@ -11,6 +11,7 @@ hyperparameters:
   td3:
     batch_size: 128
     network_width: 256
+    num_layers: 3
     learning_rate: 0.001
     tau: 0.01
     train_freq: 32

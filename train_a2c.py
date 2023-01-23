@@ -63,7 +63,7 @@ def main():
         env = VecNormalize(make_vec_env(env_factory, n_env), clip_obs=100, clip_reward=1000)
         eval_env = VecNormalize(make_vec_env(env_factory, n_env), clip_obs=100, clip_reward=1000)
 
-        policy_kwargs = dict(net_arch=[params['network_width']*2])
+        policy_kwargs = dict(net_arch=[params['network_width']*params['num_layers']])
 
         model = A2C('MlpPolicy', env,
                     learning_rate=params['learning_rate'],
@@ -81,7 +81,7 @@ def main():
                                      best_model_save_path=f"./best_models/{exp_name}/",
                                      log_path=f"./logs/{exp_name}/",
                                      eval_freq=5000,
-                                     n_eval_episodes=50,
+                                     n_eval_episodes=100,
                                      deterministic=True,
                                      render=False)
 

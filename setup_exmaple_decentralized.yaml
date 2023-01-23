@@ -11,6 +11,7 @@ hyperparameters:
   td3:
     batch_size: 128
     network_width: 256
+    num_layers: 3
     learning_rate: 0.0001
     tau: 0.02
     train_freq: 32
@@ -21,6 +22,7 @@ hyperparameters:
   # Example hyperparameters for A2C
   a2c:
     network_width: 64
+    num_layers: 3
     learning_rate: 0.001
     gamma: 0.99
     gae_lambda: 0.99
@@ -30,8 +32,11 @@ hyperparameters:
 
 #  Example hyperparameters for DQN
   dqn:
+    buffer_size: 1000000
     batch_size: 128
     network_width: 64
-    learning_rate: 0.001
+    num_layers: 3
+    learning_rate: 0.0003
     train_freq: 1
+    target_update_interval: 500
     gamma: 0.95
