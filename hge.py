@@ -26,7 +26,7 @@ class HgeTD3(TD3):
                  action_noise: Optional[ActionNoise] = None, replay_buffer_class: Optional[ReplayBuffer] = None,
                  replay_buffer_kwargs: Optional[Dict[str, Any]] = None, optimize_memory_usage: bool = False,
                  policy_delay: int = 2, target_policy_noise: float = 0.2, target_noise_clip: float = 0.5,
-                 tensorboard_log: Optional[str] = None, create_eval_env: bool = False,
+                 tensorboard_log: Optional[str] = None,
                  policy_kwargs: Optional[Dict[str, Any]] = None, verbose: int = 0, seed: Optional[int] = None,
                  device: Union[th.device, str] = "auto", _init_setup_model: bool = True,  hge_rate: float = 0.0,
                  heuristic: InventoryPolicy = None):
@@ -36,7 +36,7 @@ class HgeTD3(TD3):
 
         super().__init__(policy, env, learning_rate, buffer_size, learning_starts, batch_size, tau, gamma, train_freq,
                          gradient_steps, action_noise, replay_buffer_class, replay_buffer_kwargs, optimize_memory_usage,
-                         policy_delay, target_policy_noise, target_noise_clip, tensorboard_log, create_eval_env,
+                         policy_delay, target_policy_noise, target_noise_clip, tensorboard_log,
                          policy_kwargs, verbose, seed, device, _init_setup_model)
 
     def _sample_action(self, learning_starts: int, action_noise: Optional[ActionNoise] = None, n_envs: int = 1) -> \
