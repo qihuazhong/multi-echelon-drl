@@ -6,7 +6,7 @@ from utils.heuristics import BaseStockPolicy
 from register_envs import register_envs
 
 from hge import HgeTD3
-from utils.callbacks import HgeRateCallback, SaveEnvStatsCallback
+from utils.callbacks import HgeRateCallback, SaveEnvStatsCallback, HParamCallback
 
 import gym
 from stable_baselines3.common.env_util import make_vec_env
@@ -119,11 +119,12 @@ def main():
             deterministic=True,
             render=False,
         )
+        hparam_callback = HParamCallback(hparam_dict=params)
 
         model.learn(
             total_timesteps=setup["max_time_steps"],
             tb_log_name=exp_name,
-            callback=[hge_callback, eval_callback],
+            callback=[hge_callback, eval_callback, hparam_callback],
             reset_num_timesteps=True,
         )
 

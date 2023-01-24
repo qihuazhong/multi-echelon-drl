@@ -2,13 +2,12 @@ import argparse
 import yaml
 from utils.wrappers import wrap_action_d_plus_a
 from register_envs import register_envs
-from utils.callbacks import SaveEnvStatsCallback
+from utils.callbacks import SaveEnvStatsCallback, HParamCallback
 import gym
 from stable_baselines3 import DQN
 from stable_baselines3.common.env_util import make_vec_env
 from stable_baselines3.common.vec_env import VecNormalize
 from stable_baselines3.common.callbacks import EvalCallback
-from tensorboard.plugins.hparams import api as hp
 
 
 def main():
@@ -99,10 +98,12 @@ def main():
             render=False,
         )
 
+        hparam_callback = HParamCallback(hparam_dict=params)
+
         model.learn(
             total_timesteps=setup["max_time_steps"],
             tb_log_name=exp_name,
-            callback=eval_callback,
+            callback=[hparam_callback, eval_callback],
             reset_num_timesteps=True,
         )
 

@@ -1,4 +1,5 @@
 from stable_baselines3.common.callbacks import BaseCallback
+from stable_baselines3.common.logger import HParam
 
 
 class HgeRateCallback(BaseCallback):
@@ -33,3 +34,33 @@ class SaveEnvStatsCallback(BaseCallback):
     def on_step(self) -> bool:
         super().on_step()
         self.training_env.save(f"{self.env_save_path}best_env")
+        return True
+
+
+class HParamCallback(BaseCallback):
+    """
+    Saves the hyperparameters and metrics at the start of the training, and logs them to TensorBoard.
+    """
+
+    def __init__(self, hparam_dict: dict, verbose: int = 0):
+        super().__init__(verbose)
+        self.hparam_dict = hparam_dict
+
+    def _on_training_start(self) -> None:
+        self.hparam_dict["algorithm"] = self.model.__class__.__name__
+
+        # define the metrics that will appear in the `HPARAMS` Tensorboard tab by referencing their tag
+        # Tensorbaord will find & display metrics from the `SCALARS` tab
+        metric_dict = {
+            "eval/mean_reward": 0,
+            "train/loss": 0.0,
+            "time/fps": 0,
+        }
+        self.logger.record(
+            "hparams",
+            HParam(self.hparam_dict, metric_dict),
+            exclude=("stdout", "log", "json", "csv"),
+        )
+
+    def _on_step(self) -> bool:
+        return True

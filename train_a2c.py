@@ -2,7 +2,7 @@ import argparse
 import yaml
 from utils.wrappers import wrap_action_d_plus_a
 from register_envs import register_envs
-from utils.callbacks import SaveEnvStatsCallback
+from utils.callbacks import SaveEnvStatsCallback, HParamCallback
 import gym
 from stable_baselines3 import A2C
 from stable_baselines3.common.env_util import make_vec_env
@@ -96,11 +96,12 @@ def main():
             deterministic=True,
             render=False,
         )
+        hparam_callback = HParamCallback(hparam_dict=params)
 
         model.learn(
             total_timesteps=setup["max_time_steps"],
             tb_log_name=exp_name,
-            callback=eval_callback,
+            callback=[eval_callback, hparam_callback],
             reset_num_timesteps=True,
         )
 
