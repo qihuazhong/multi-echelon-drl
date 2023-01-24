@@ -1,5 +1,6 @@
 environment:
   role: Retailer # should be one of Retailer, Wholesaler, Distributor, Manufacturer or MultiFacility
+  global_info: true
   scenario: complex # complex or basic
   ordering_rule: d+a # a or d+a
 
