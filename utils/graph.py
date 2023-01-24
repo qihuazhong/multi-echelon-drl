@@ -2,7 +2,7 @@ from typing import List
 import yaml
 
 
-def parse_order_sequence(nodes: List[str], customers_dict: dict) -> list:
+def parse_order_sequence(nodes: List[str], customers_dict: dict) -> List[str]:
     """Determine the sequence of placing orders. The sequence should satisfy that:
     a node_name should place order(s) only after all its customer(s) finish ordering.
 
@@ -33,7 +33,7 @@ def parse_order_sequence(nodes: List[str], customers_dict: dict) -> list:
 
 
 def read_yaml(file_path: str) -> dict:
-    with open(file_path, 'r') as file:
+    with open(file_path, "r") as file:
         network_config = yaml.safe_load(file)
 
     return network_config

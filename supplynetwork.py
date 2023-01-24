@@ -29,9 +29,11 @@ class SupplyNetwork:
         self.internal_nodes = [node.name for node in nodes if not node.is_external_supplier]
 
         # order of the information flow
-        self.order_sequence = graph.parse_order_sequence([node for node in self.nodes], self.customers_dict)
+        self.order_sequence: List[str] = graph.parse_order_sequence([node for node in self.nodes], self.customers_dict)
         # order of the shipment flow
-        self.shipment_sequence = [self.order_sequence[i] for i in range(len(self.order_sequence) - 1, -1, -1)]
+        self.shipment_sequence: List[str] = [
+            self.order_sequence[i] for i in range(len(self.order_sequence) - 1, -1, -1)
+        ]
 
         self.agent_managed_facilities = agent_managed_facilities
         self.agent_indexes = [self.order_sequence.index(player) for player in self.agent_managed_facilities]

@@ -29,24 +29,31 @@ class InventoryManagementEnv(gym.Env, ABC):
 class InventoryManagementEnvMultiPlayer(ABC, gym.Env):
     def __init__(
         self,
-        supply_network,
+        supply_network: SupplyNetwork,
         max_episode_steps: int,
         action_space: gym.Space,
         observation_space: gym.Space,
-        visible_states=None,
-        return_dict=False,
+        global_observable: bool = False,
+        visible_states: bool = None,
+        return_dict: bool = False,
     ):
         """
         Args:
             supply_network:
+            max_episode_steps:
+            action_space:
+            observation_space:
+            global_observable: Whether the entire chain is observable.
             visible_states: A string or a list of strings. Limit the states that are visible to the agent. Return
             all states when not provided.
             return_dict: whether the return states is a numpy array(Default) or a dictionary
         """
+
         self.sn: SupplyNetwork = supply_network
         self.max_episode_steps = max_episode_steps
         self.action_space = action_space
         self.observation_space = observation_space
+        self.global_observable = global_observable
         self.visible_states = visible_states
         self.return_dict = return_dict
         self.period = 0
@@ -61,9 +68,11 @@ class InventoryManagementEnvMultiPlayer(ABC, gym.Env):
 
         self.sn.before_action(self.period)
 
-        states: Union[np.ndarray, Dict[str, dict]] = {
-            agent: self.sn.get_state(agent) for agent in self.sn.agent_managed_facilities
-        }
+        states: Union[np.ndarray, Dict[str, dict]]
+        if self.global_observable:
+            states = {agent: self.sn.get_state(agent) for agent in self.sn.internal_nodes}
+        else:
+            states = {agent: self.sn.get_state(agent) for agent in self.sn.agent_managed_facilities}
 
         if not self.return_dict:
             states = np.array([list(state.values()) for agent, state in states.items()], dtype=np.float32).flatten()
@@ -91,7 +100,11 @@ class InventoryManagementEnvMultiPlayer(ABC, gym.Env):
         else:
             self.sn.before_action(self.period)
 
-        states = {agent: self.sn.get_state(agent) for agent in self.sn.agent_managed_facilities}
+        states: Union[np.ndarray, Dict[str, dict]]
+        if self.global_observable:
+            states = {agent: self.sn.get_state(agent) for agent in self.sn.internal_nodes}
+        else:
+            states = {agent: self.sn.get_state(agent) for agent in self.sn.agent_managed_facilities}
 
         if not self.return_dict:
             states = np.array([list(state.values()) for agent, state in states.items()], dtype=np.float32).flatten()
@@ -268,6 +281,7 @@ def make_beer_game_normal_multi_facility(
 
 
 def make_beer_game_uniform_multi_facility(
+    global_observable=False,
     agent_managed_facilities=None,
     max_episode_steps=100,
     return_dict=False,
@@ -379,13 +393,17 @@ def make_beer_game_uniform_multi_facility(
     else:
         action_space = gym.spaces.Discrete(17)
 
-    observation_space = gym.spaces.Box(low=-np.inf, high=np.inf, shape=(7 * num_agent_managed_facilities,))
+    if global_observable:
+        observation_space = gym.spaces.Box(low=-np.inf, high=np.inf, shape=(7 * len(sn.internal_nodes),))
+    else:
+        observation_space = gym.spaces.Box(low=-np.inf, high=np.inf, shape=(7 * num_agent_managed_facilities,))
 
     return InventoryManagementEnvMultiPlayer(
         sn,
         max_episode_steps=max_episode_steps,
         action_space=action_space,
         observation_space=observation_space,
+        global_observable=global_observable,
         return_dict=return_dict,
     )
 
