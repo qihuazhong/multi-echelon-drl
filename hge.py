@@ -19,28 +19,67 @@ class HgeTD3(TD3):
     Include the heuristic-guided exploration rate
     """
 
-    def __init__(self, policy: Union[str, Type[TD3Policy]], env: Union[GymEnv, str],
-                 learning_rate: Union[float, Schedule] = 1e-3, buffer_size: int = 1_000_000, learning_starts: int = 100,
-                 batch_size: int = 100, tau: float = 0.005, gamma: float = 0.99,
-                 train_freq: Union[int, Tuple[int, str]] = (1, "episode"), gradient_steps: int = -1,
-                 action_noise: Optional[ActionNoise] = None, replay_buffer_class: Optional[ReplayBuffer] = None,
-                 replay_buffer_kwargs: Optional[Dict[str, Any]] = None, optimize_memory_usage: bool = False,
-                 policy_delay: int = 2, target_policy_noise: float = 0.2, target_noise_clip: float = 0.5,
-                 tensorboard_log: Optional[str] = None,
-                 policy_kwargs: Optional[Dict[str, Any]] = None, verbose: int = 0, seed: Optional[int] = None,
-                 device: Union[th.device, str] = "auto", _init_setup_model: bool = True,  hge_rate: float = 0.0,
-                 heuristic: InventoryPolicy = None):
+    def __init__(
+        self,
+        policy: Union[str, Type[TD3Policy]],
+        env: Union[GymEnv, str],
+        learning_rate: Union[float, Schedule] = 1e-3,
+        buffer_size: int = 1_000_000,
+        learning_starts: int = 100,
+        batch_size: int = 100,
+        tau: float = 0.005,
+        gamma: float = 0.99,
+        train_freq: Union[int, Tuple[int, str]] = (1, "episode"),
+        gradient_steps: int = -1,
+        action_noise: Optional[ActionNoise] = None,
+        replay_buffer_class: Optional[ReplayBuffer] = None,
+        replay_buffer_kwargs: Optional[Dict[str, Any]] = None,
+        optimize_memory_usage: bool = False,
+        policy_delay: int = 2,
+        target_policy_noise: float = 0.2,
+        target_noise_clip: float = 0.5,
+        tensorboard_log: Optional[str] = None,
+        policy_kwargs: Optional[Dict[str, Any]] = None,
+        verbose: int = 0,
+        seed: Optional[int] = None,
+        device: Union[th.device, str] = "auto",
+        _init_setup_model: bool = True,
+        hge_rate: float = 0.0,
+        heuristic: InventoryPolicy = None,
+    ):
 
         self.hge_rate = hge_rate
         self.heuristic = heuristic
 
-        super().__init__(policy, env, learning_rate, buffer_size, learning_starts, batch_size, tau, gamma, train_freq,
-                         gradient_steps, action_noise, replay_buffer_class, replay_buffer_kwargs, optimize_memory_usage,
-                         policy_delay, target_policy_noise, target_noise_clip, tensorboard_log,
-                         policy_kwargs, verbose, seed, device, _init_setup_model)
+        super().__init__(
+            policy,
+            env,
+            learning_rate,
+            buffer_size,
+            learning_starts,
+            batch_size,
+            tau,
+            gamma,
+            train_freq,
+            gradient_steps,
+            action_noise,
+            replay_buffer_class,
+            replay_buffer_kwargs,
+            optimize_memory_usage,
+            policy_delay,
+            target_policy_noise,
+            target_noise_clip,
+            tensorboard_log,
+            policy_kwargs,
+            verbose,
+            seed,
+            device,
+            _init_setup_model,
+        )
 
-    def _sample_action(self, learning_starts: int, action_noise: Optional[ActionNoise] = None, n_envs: int = 1) -> \
-    Tuple[np.ndarray, np.ndarray]:
+    def _sample_action(
+        self, learning_starts: int, action_noise: Optional[ActionNoise] = None, n_envs: int = 1
+    ) -> Tuple[np.ndarray, np.ndarray]:
         """
         Override the off_policy_algorithm _sample_action() to pass both normalized and original observation to
         the predict() method
@@ -72,17 +111,20 @@ class HgeTD3(TD3):
             action = buffer_action
         return action, buffer_action
 
-
-    def predict(self, observation: np.ndarray, state: Optional[Tuple[np.ndarray, ...]] = None,
-                episode_start: Optional[np.ndarray] = None, deterministic: bool = False,
-                original_obs: Optional[np.ndarray] = None) -> Tuple[
-        np.ndarray, Optional[Tuple[np.ndarray, ...]]]:
+    def predict(
+        self,
+        observation: np.ndarray,
+        state: Optional[Tuple[np.ndarray, ...]] = None,
+        episode_start: Optional[np.ndarray] = None,
+        deterministic: bool = False,
+        original_obs: Optional[np.ndarray] = None,
+    ) -> Tuple[np.ndarray, Optional[Tuple[np.ndarray, ...]]]:
 
         """
         Overrides the base_class predict function to include heuristic-guided exploration.
 
         """
-        if not deterministic and np.random.rand() < self.hge_rate ** 2:
+        if not deterministic and np.random.rand() < self.hge_rate**2:
             if is_vectorized_observation(maybe_transpose(observation, self.observation_space), self.observation_space):
                 if isinstance(self.observation_space, gym.spaces.Dict):
                     n_batch = observation[list(observation.keys())[0]].shape[0]
