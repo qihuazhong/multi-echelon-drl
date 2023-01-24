@@ -10,8 +10,6 @@ from supplynetwork import SupplyNetwork
 from network_components import Node, Arc
 import gym
 from gym.utils import seeding
-from gym.spaces import Discrete, Box
-
 
 # print logging info to stdout
 logging.basicConfig(level=logging.WARNING, handlers=[logging.StreamHandler()])

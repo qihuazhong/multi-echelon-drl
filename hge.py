@@ -13,7 +13,6 @@ from stable_baselines3.td3.policies import TD3Policy
 
 sys.path.append(os.path.abspath(os.path.join("..")) + "/snim")
 
-from supplynetwork import SupplyNetwork
 
 # from policies import BaseStockPolicy
 from utils.heuristics import BaseStockPolicy, InventoryPolicy
