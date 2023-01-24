@@ -45,7 +45,7 @@ def main():
 
     params = setup["hyperparameters"]["a2c"]
 
-    env_name = f"BeerGame{demand_type}{environment['role']}Discrete-v0"
+    env_name = f"BeerGame{demand_type}{environment['role']}{'FullInfo'*environment['global_info']}Discrete-v0"
 
     # Register different versions of the beer game to the Gym Registry, so the environment can be created using gym.make
     register_envs()
@@ -65,11 +65,9 @@ def main():
         else:
             raise ValueError
 
-    for run in range(setup["runs"] + 1):
+    for run in range(setup["runs"]):
 
-        exp_name = (
-            f"{args.name}_A2C_{environment['role']}_{environment['scenario']}_{environment['ordering_rule']}_{run}"
-        )
+        exp_name = f"{args.name}_A2C_{environment['role']}_{environment['scenario']}_{'FullInfo'*environment['global_info']}_{environment['ordering_rule']}_{run}"
         env = VecNormalize(make_vec_env(env_factory, n_env), clip_obs=100, clip_reward=1000)
         eval_env = VecNormalize(make_vec_env(env_factory, n_env), clip_obs=100, clip_reward=1000)
 

@@ -51,7 +51,8 @@ def main():
     if params["hge_rate_at_start"] > 0 and environment["role"] != "MultiFacility":
         raise NotImplementedError("For now the TD3 with HGE only supports centralized setting")
 
-    env_name = f"BeerGame{demand_type}{environment['role']}-v0"
+    env_name = f"BeerGame{demand_type}{environment['role']}{'FullInfo'*environment['global_info']}-v0"
+
     bsp = BaseStockPolicy(
         target_levels=benchmark_target_stock_level,
         array_index={"on_hand": 0, "unreceived_pipeline": [3, 4, 5, 6], "unfilled_demand": 1, "latest_demand": 2},
@@ -79,10 +80,9 @@ def main():
         else:
             raise ValueError
 
-    for run in range(setup["runs"] + 1):
-        exp_name = (
-            f"{args.name}_TD3_{environment['role']}_{environment['scenario']}_{environment['ordering_rule']}_{run}"
-        )
+    for run in range(setup["runs"]):
+
+        exp_name = f"{args.name}_TD3_{environment['role']}_{environment['scenario']}_{'FullInfo'*environment['global_info']}_{environment['ordering_rule']}_{run}"
         env = VecNormalize(make_vec_env(env_factory, n_env), clip_obs=100, clip_reward=1000)
         eval_env = VecNormalize(make_vec_env(env_factory, n_env), clip_obs=100, clip_reward=1000)
 
