@@ -47,8 +47,8 @@ class Order:
         return self.order_quantity - self.shipped_quantity
 
     @property
-    def requires_shipping(self):
-        # requires a shipment if order is received by the suppler and unshipped quantity is positive
+    def requires_shipping(self) -> bool:
+        # requires a shipment if order is received by the supplier and unshipped quantity is positive
         return (self.remaining_lead_time <= 0) and (self.shipped_quantity < self.order_quantity)
 
 
@@ -63,13 +63,17 @@ class OrderList(list):
     def requires_shipment_subtotal(self):
         return sum([so.unshipped_quantity for so in self if so.remaining_lead_time <= 0])
 
-    def clean_finished_orders(self):
+    def clean_finished_orders(self) -> None:
         self.sort(key=lambda x: x.unshipped_quantity, reverse=True)
         while (self.__len__() > 0) and (self[-1].unshipped_quantity == 0):
             self.pop()
 
 
 class ShipmentList(list):
+    def __init__(self, seq=(), history_len: int = 4):
+        super().__init__(seq)
+        self.history_len = history_len
+
     def receive_shipments(self):
         arrived_quantity = 0
         self.sort(key=lambda x: x.time_till_arrival, reverse=True)
@@ -81,7 +85,18 @@ class ShipmentList(list):
 
     @property
     def en_route_subtotal(self):
-        return sum([sm.quantity for sm in self])
+        return sum([shipment.quantity for shipment in self])
+
+    @property
+    def shipment_quantity_by_time(self) -> List[float]:
+        shipment_quantity_by_time = []
+
+        for t in range(1, self.history_len + 1):
+            shipment_quantity_by_time.append(
+                sum([shipment.quantity for shipment in self if shipment.time_till_arrival == t])
+            )
+
+        return shipment_quantity_by_time
 
 
 class Arc:
@@ -91,10 +106,7 @@ class Arc:
         source (str): name of the supplier node_name
         target (str): name of the customer node_name
         sales_orders (OrderList): A list of sales orders
-
         ordering_cost (float): A fixed cost that incurs everytime an order is placed regardless of the order quantity. (TODO)
-
-
     """
 
     HISTORY_LEN = 4  # TODO
@@ -107,7 +119,6 @@ class Arc:
         shipment_leadtime,
         initial_shipments: Optional[List] = None,
         initial_sales_orders: Optional[List] = None,
-        initial_previous_orders=None,
         random_init=False,
         ordering_cost: float = 0.0,
     ):
@@ -116,43 +127,45 @@ class Arc:
         self.information_leadtime = information_leadtime
         self.shipment_leadtime = shipment_leadtime
 
+        self.shipments: ShipmentList = None  # Will be initialized in reset()
         self.initial_shipments = initial_shipments
         self.initial_SOs = initial_sales_orders
 
-        self.initial_previous_orders = initial_previous_orders
         self.random_init = random_init
 
         self.reset()
 
-    # noinspection PyAttributeOutsideInit
     def reset(self):
         if self.initial_shipments is None:
-            shmts = [0] * self.shipment_leadtime
+            shipments = [0] * self.shipment_leadtime
         elif self.random_init:
-            shmts = [
+            shipments = [
                 np.random.randint(self.initial_shipments[0], self.initial_shipments[1])
                 for t in range(self.shipment_leadtime)
             ]
         else:
-            shmts = self.initial_shipments[: self.shipment_leadtime]  # TODO check length
+            shipments = self.initial_shipments[: self.shipment_leadtime]  # TODO check length
 
-        self.shipments = ShipmentList([Shipment(shmts[t], t + 1) for t in range(self.shipment_leadtime)])
+        self.shipments = ShipmentList(
+            [Shipment(shipments[t], t + 1) for t in range(self.shipment_leadtime)], history_len=self.HISTORY_LEN
+        )
 
         if self.initial_SOs is None:
-            sos = [0] * self.information_leadtime
+            sales_orders = [0] * self.information_leadtime
         elif self.random_init:
-            sos = [
+            sales_orders = [
                 np.random.randint(self.initial_SOs[0], self.initial_SOs[1]) for t in range(self.information_leadtime)
             ]
         else:
-            sos = self.initial_SOs[: self.information_leadtime]  # TODO check length
+            sales_orders = self.initial_SOs[: self.information_leadtime]  # TODO check length
 
-        self.sales_orders = OrderList([Order(sos[t], 0, t + 1) for t in range(self.information_leadtime)])
+        self.sales_orders = OrderList([Order(sales_orders[t], 0, t + 1) for t in range(self.information_leadtime)])
 
-        # TODO
-        self.previous_orders = ([0] * 4 + shmts + sos)[::-1][: self.HISTORY_LEN]
+        # keep track of previous orders. Sorted by descending time (most recent to ancient), e.g. [order_{t-1},
+        # order_{t-2}, order_{t-3}, order_{t-4}]
+        self.previous_orders = ([0] * 4 + shipments + sales_orders)[::-1][: self.HISTORY_LEN]
 
-        self.unreceived_quantities = ([0] * 4 + shmts + sos)[::-1][: self.HISTORY_LEN + 1]
+        self.unreceived_quantities = ([0] * 4 + shipments + sales_orders)[::-1][: self.HISTORY_LEN + 1]
         # print(f'unreceived_quantities: {self.unreceived_quantities}')
 
     def keep_order_history(self, order_quantity):
