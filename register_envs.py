@@ -1,18 +1,10 @@
+from typing import List
 import gym
-
 from envs import make_beer_game_uniform_multi_facility, make_beer_game_normal_multi_facility
 from utils.wrappers import wrap_action_d_plus_a
 
 
-def uniform_multi_facility_env_factory():
-    env = make_beer_game_uniform_multi_facility(
-        agent_managed_facilities=["retailer", "wholesaler", "distributor", "manufacturer"],
-        box_action_space=True,
-        random_init=True,
-    )
-    return env
-
-
+# For td3 hyperparameters tuning
 def uniform_multi_facility_dplusa_env_factory():
     env = make_beer_game_uniform_multi_facility(
         agent_managed_facilities=["retailer", "wholesaler", "distributor", "manufacturer"],
@@ -23,48 +15,16 @@ def uniform_multi_facility_dplusa_env_factory():
     return env
 
 
-def uniform_single_facility_retailer_env_factory():
-    env = make_beer_game_uniform_multi_facility(agent_managed_facilities=["retailer"], box_action_space=True, random_init=True)
-    return env
-
-
+# For td3 hyperparameters tuning
 def uniform_single_facility_retailer_dplusa_env_factory():
-    env = make_beer_game_uniform_multi_facility(agent_managed_facilities=["retailer"], box_action_space=True, random_init=True)
+    env = make_beer_game_uniform_multi_facility(
+        agent_managed_facilities=["retailer"], box_action_space=True, random_init=True
+    )
     env = wrap_action_d_plus_a(env, offset=-8, lb=0, ub=16)
     return env
 
 
-def uniform_single_facility_wholesaler_env_factory():
-    env = make_beer_game_uniform_multi_facility(
-        agent_managed_facilities=["wholesaler"], box_action_space=True, random_init=True
-    )
-    #     env = wrap_action_d_plus_a(env, offset=-8)
-    return env
-
-
-def uniform_single_facility_distributor_env_factory():
-    env = make_beer_game_uniform_multi_facility(
-        agent_managed_facilities=["distributor"], box_action_space=True, random_init=True
-    )
-    #     env = wrap_action_d_plus_a(env, offset=-8)
-    return env
-
-
-def uniform_single_facility_manufacturer_env_factory():
-    env = make_beer_game_uniform_multi_facility(
-        agent_managed_facilities=["manufacturer"], box_action_space=True, random_init=True
-    )
-    #     env = wrap_action_d_plus_a(env, offset=-8)
-    return env
-
-
-def uniform_single_facility_retailer_discrete_env_factory():
-    env = make_beer_game_uniform_multi_facility(
-        agent_managed_facilities=["retailer"], box_action_space=False, random_init=True
-    )
-    return env
-
-
+# For dqn and a2c hyperparameters tuning
 def uniform_single_facility_retailer_discrete_dplusa_env_factory():
     env = make_beer_game_uniform_multi_facility(
         agent_managed_facilities=["retailer"], box_action_space=False, random_init=True
@@ -73,63 +33,30 @@ def uniform_single_facility_retailer_discrete_dplusa_env_factory():
     return env
 
 
-def uniform_single_facility_wholesaler_discrete_env_factory():
-    env = make_beer_game_uniform_multi_facility(
-        agent_managed_facilities=["wholesaler"], box_action_space=False, random_init=True
-    )
-    return env
+def uniform_env_factory(role: List[str], discrete: bool, global_observable: bool):
+    def func():
+        env = make_beer_game_uniform_multi_facility(
+            agent_managed_facilities=role,
+            box_action_space=~discrete,
+            random_init=True,
+            global_observable=global_observable,
+        )
+        return env
+
+    return func
 
 
-def uniform_single_facility_distributor_discrete_env_factory():
-    env = make_beer_game_uniform_multi_facility(
-        agent_managed_facilities=["distributor"], box_action_space=False, random_init=True
-    )
-    return env
+def normal_env_factory(role: List[str], discrete: bool, global_observable: bool):
+    def func():
+        env = make_beer_game_normal_multi_facility(
+            agent_managed_facilities=role,
+            box_action_space=~discrete,
+            random_init=True,
+            global_observable=global_observable,
+        )
+        return env
 
-
-def uniform_single_facility_manufacturer_discrete_env_factory():
-    env = make_beer_game_uniform_multi_facility(
-        agent_managed_facilities=["manufacturer"], box_action_space=False, random_init=True
-    )
-    return env
-
-
-def uniform_single_facility_retailer_full_info_discrete_env_factory():
-    env = make_beer_game_uniform_multi_facility(
-        agent_managed_facilities=["retailer"], box_action_space=False, random_init=True, global_observable=True
-    )
-    return env
-
-
-def uniform_single_facility_wholesaler_full_info_discrete_env_factory():
-    env = make_beer_game_uniform_multi_facility(
-        agent_managed_facilities=["wholesaler"], box_action_space=False, random_init=True, global_observable=True
-    )
-    return env
-
-
-def uniform_single_facility_distributor_full_info_discrete_env_factory():
-    env = make_beer_game_uniform_multi_facility(
-        agent_managed_facilities=["distributor"], box_action_space=False, random_init=True, global_observable=True
-    )
-    return env
-
-
-def uniform_single_facility_manufacturer_full_info_discrete_env_factory():
-    env = make_beer_game_uniform_multi_facility(
-        agent_managed_facilities=["manufacturer"], box_action_space=False, random_init=True, global_observable=True
-    )
-    return env
-
-
-def normal_multi_facility_env_factory():
-    env = make_beer_game_normal_multi_facility(
-        agent_managed_facilities=["retailer", "wholesaler", "distributor", "manufacturer"],
-        box_action_space=True,
-        random_init=True,
-    )
-    #     env = wrap_action_d_plus_a(env, offset=-8)
-    return env
+    return func
 
 
 def normal_multi_facility_dplusa_env_factory():
@@ -142,104 +69,22 @@ def normal_multi_facility_dplusa_env_factory():
     return env
 
 
-def normal_single_facility_retailer_env_factory():
-    env = make_beer_game_normal_multi_facility(agent_managed_facilities=["retailer"], box_action_space=True, random_init=True)
-    #     env = wrap_action_d_plus_a(env, offset=-8)
-    return env
-
-
-def normal_single_facility_wholesaler_env_factory():
-    env = make_beer_game_normal_multi_facility(
-        agent_managed_facilities=["wholesaler"], box_action_space=True, random_init=True
-    )
-    #     env = wrap_action_d_plus_a(env, offset=-8)
-    return env
-
-
-def normal_single_facility_distributor_env_factory():
-    env = make_beer_game_normal_multi_facility(
-        agent_managed_facilities=["distributor"], box_action_space=True, random_init=True
-    )
-    #     env = wrap_action_d_plus_a(env, offset=-8)
-    return env
-
-
-def normal_single_facility_manufacturer_env_factory():
-    env = make_beer_game_normal_multi_facility(
-        agent_managed_facilities=["manufacturer"], box_action_space=True, random_init=True
-    )
-    #     env = wrap_action_d_plus_a(env, offset=-8)
-    return env
-
-
-def normal_single_facility_retailer_discrete_env_factory():
-    env = make_beer_game_normal_multi_facility(agent_managed_facilities=["retailer"], box_action_space=False, random_init=True)
-    #     env = wrap_action_d_plus_a(env, offset=-8)
-    return env
-
-
-def normal_single_facility_wholesaler_discrete_env_factory():
-    env = make_beer_game_normal_multi_facility(
-        agent_managed_facilities=["wholesaler"], box_action_space=False, random_init=True
-    )
-    #     env = wrap_action_d_plus_a(env, offset=-8)
-    return env
-
-
-def normal_single_facility_distributor_discrete_env_factory():
-    env = make_beer_game_normal_multi_facility(
-        agent_managed_facilities=["distributor"], box_action_space=False, random_init=True
-    )
-    #     env = wrap_action_d_plus_a(env, offset=-8)
-    return env
-
-
-def normal_single_facility_manufacturer_discrete_env_factory():
-    env = make_beer_game_normal_multi_facility(
-        agent_managed_facilities=["manufacturer"], box_action_space=False, random_init=True
-    )
-    #     env = wrap_action_d_plus_a(env, offset=-8)
-    return env
-
-
 def register_envs():
-    gym.envs.register(
-        id="BeerGameUniformMultiFacility-v0", entry_point=uniform_multi_facility_env_factory, max_episode_steps=100
-    )
+
     gym.envs.register(
         id="BeerGameUniformMultiFacilityDPlusA-v0",
         entry_point=uniform_multi_facility_dplusa_env_factory,
         max_episode_steps=100,
     )
-
     gym.envs.register(
-        id="BeerGameUniformRetailer-v0", entry_point=uniform_single_facility_retailer_env_factory, max_episode_steps=100
+        id="BeerGameNormalMultiFacilityDPlusA-v0",
+        entry_point=normal_multi_facility_dplusa_env_factory,
+        max_episode_steps=100,
     )
+
     gym.envs.register(
         id="BeerGameUniformRetailerDPlusA-v0",
         entry_point=uniform_single_facility_retailer_dplusa_env_factory,
-        max_episode_steps=100,
-    )
-
-    gym.envs.register(
-        id="BeerGameUniformWholesaler-v0",
-        entry_point=uniform_single_facility_wholesaler_env_factory,
-        max_episode_steps=100,
-    )
-    gym.envs.register(
-        id="BeerGameUniformDistributor-v0",
-        entry_point=uniform_single_facility_distributor_env_factory,
-        max_episode_steps=100,
-    )
-    gym.envs.register(
-        id="BeerGameUniformManufacturer-v0",
-        entry_point=uniform_single_facility_manufacturer_env_factory,
-        max_episode_steps=100,
-    )
-
-    gym.envs.register(
-        id="BeerGameUniformRetailerDiscrete-v0",
-        entry_point=uniform_single_facility_retailer_discrete_env_factory,
         max_episode_steps=100,
     )
     gym.envs.register(
@@ -249,87 +94,72 @@ def register_envs():
     )
 
     gym.envs.register(
-        id="BeerGameUniformWholesalerDiscrete-v0",
-        entry_point=uniform_single_facility_wholesaler_discrete_env_factory,
-        max_episode_steps=100,
-    )
-    gym.envs.register(
-        id="BeerGameUniformDistributorDiscrete-v0",
-        entry_point=uniform_single_facility_distributor_discrete_env_factory,
-        max_episode_steps=100,
-    )
-    gym.envs.register(
-        id="BeerGameUniformManufacturerDiscrete-v0",
-        entry_point=uniform_single_facility_manufacturer_discrete_env_factory,
+        id="BeerGameUniformMultiFacilityFullInfo-v0",
+        entry_point=uniform_env_factory(
+            role=["retailer", "wholesaler", "distributor", "manufacturer"], discrete=False, global_observable=True
+        ),
         max_episode_steps=100,
     )
 
     gym.envs.register(
-        id="BeerGameUniformRetailerFullInfoDiscrete-v0",
-        entry_point=uniform_single_facility_retailer_full_info_discrete_env_factory,
+        id="BeerGameNormalMultiFacilityFullInfo-v0",
+        entry_point=normal_env_factory(
+            role=["retailer", "wholesaler", "distributor", "manufacturer"], discrete=False, global_observable=True
+        ),
         max_episode_steps=100,
     )
-    gym.envs.register(
-        id="BeerGameUniformWholesalerFullInfoDiscrete-v0",
-        entry_point=uniform_single_facility_wholesaler_full_info_discrete_env_factory,
-        max_episode_steps=100,
-    )
-    gym.envs.register(
-        id="BeerGameUniformDistributorFullInfoDiscrete-v0",
-        entry_point=uniform_single_facility_distributor_full_info_discrete_env_factory,
-        max_episode_steps=100,
-    )
-    gym.envs.register(
-        id="BeerGameUniformManufacturerFullInfoDiscrete-v0",
-        entry_point=uniform_single_facility_manufacturer_full_info_discrete_env_factory,
-        max_episode_steps=100,
-    )
+    roles = {
+        "Retailer": ["retailer"],
+        "Wholesaler": ["wholesaler"],
+        "Distributor": ["distributor"],
+        "Manufacturer": ["manufacturer"],
+    }
+    for key, role in roles.items():
 
-    gym.envs.register(
-        id="BeerGameNormalMultiFacility-v0", entry_point=normal_multi_facility_env_factory, max_episode_steps=100
-    )
-    gym.envs.register(
-        id="BeerGameNormalMultiFacilityDPlusA-v0",
-        entry_point=normal_multi_facility_dplusa_env_factory,
-        max_episode_steps=100,
-    )
+        # uniform (complex scenario)
+        gym.envs.register(
+            id=f"BeerGameUniform{key}-v0",
+            entry_point=uniform_env_factory(role=role, discrete=False, global_observable=False),
+            max_episode_steps=100,
+        )
 
-    gym.envs.register(
-        id="BeerGameNormalRetailer-v0", entry_point=normal_single_facility_retailer_env_factory, max_episode_steps=100
-    )
-    gym.envs.register(
-        id="BeerGameNormalWholesaler-v0",
-        entry_point=normal_single_facility_wholesaler_env_factory,
-        max_episode_steps=100,
-    )
-    gym.envs.register(
-        id="BeerGameNormalDistributor-v0",
-        entry_point=normal_single_facility_distributor_env_factory,
-        max_episode_steps=100,
-    )
-    gym.envs.register(
-        id="BeerGameNormalManufacturer-v0",
-        entry_point=normal_single_facility_manufacturer_env_factory,
-        max_episode_steps=100,
-    )
+        gym.envs.register(
+            id=f"BeerGameUniform{key}Discrete-v0",
+            entry_point=uniform_env_factory(role=role, discrete=True, global_observable=False),
+            max_episode_steps=100,
+        )
+        gym.envs.register(
+            id=f"BeerGameUniform{key}FullInfo-v0",
+            entry_point=uniform_env_factory(role=role, discrete=False, global_observable=True),
+            max_episode_steps=100,
+        )
+        gym.envs.register(
+            id=f"BeerGameUniform{key}DiscreteFullInfo-v0",
+            entry_point=uniform_env_factory(role=role, discrete=True, global_observable=True),
+            max_episode_steps=100,
+        )
 
-    gym.envs.register(
-        id="BeerGameNormalRetailerDiscrete-v0",
-        entry_point=normal_single_facility_retailer_discrete_env_factory,
-        max_episode_steps=100,
-    )
-    gym.envs.register(
-        id="BeerGameNormalWholesalerDiscrete-v0",
-        entry_point=normal_single_facility_wholesaler_discrete_env_factory,
-        max_episode_steps=100,
-    )
-    gym.envs.register(
-        id="BeerGameNormalDistributorDiscrete-v0",
-        entry_point=normal_single_facility_distributor_discrete_env_factory,
-        max_episode_steps=100,
-    )
-    gym.envs.register(
-        id="BeerGameNormalManufacturerDiscrete-v0",
-        entry_point=normal_single_facility_manufacturer_discrete_env_factory,
-        max_episode_steps=100,
-    )
+        # normal (basic scenario)
+        gym.envs.register(
+            id=f"BeerGameNormal{key}-v0",
+            entry_point=normal_env_factory(role=role, discrete=False, global_observable=False),
+            max_episode_steps=100,
+        )
+
+        gym.envs.register(
+            id=f"BeerGameNormal{key}Discrete-v0",
+            entry_point=normal_env_factory(role=role, discrete=True, global_observable=False),
+            max_episode_steps=100,
+        )
+
+        gym.envs.register(
+            id=f"BeerGameNormal{key}FullInfo-v0",
+            entry_point=normal_env_factory(role=role, discrete=False, global_observable=True),
+            max_episode_steps=100,
+        )
+
+        gym.envs.register(
+            id=f"BeerGameNormal{key}DiscreteFullInfo-v0",
+            entry_point=normal_env_factory(role=role, discrete=True, global_observable=True),
+            max_episode_steps=100,
+        )
