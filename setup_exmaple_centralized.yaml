@@ -1,10 +1,5 @@
-environment:
-  role: MultiFacility # should be one of Retailer, Wholesaler, Distributor, Manufacturer or MultiFacility
-  scenario: complex # complex or basic
-  ordering_rule: a # a or d+a
-
-runs: 3
-max_time_steps: 500000
+runs: 1
+max_time_steps: 10_000_000
 
 hyperparameters:
   # Example hyperparameters for TD3
