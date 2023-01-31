@@ -9,3 +9,7 @@ __pycache__/
 best_models/
 logs/
 tensorboard/
+*.DS_Store
+
+tests/*.ipynb
+tests/.ipynb_checkpoints

@@ -1,42 +1,37 @@
-environment:
-  role: Retailer # should be one of Retailer, Wholesaler, Distributor, Manufacturer or MultiFacility
-  scenario: complex # complex or basic
-  ordering_rule: d+a # a or d+a
-
-runs: 3
-max_time_steps: 500000
+runs: 1
+max_time_steps: 10_000_000
 
 hyperparameters:
   # Example hyperparameters for TD3
   td3:
     batch_size: 128
-    network_width: 256
-    num_layers: 3
-    learning_rate: 0.0001
+    network_width: 64
+    num_layers: 2
+    learning_rate: 0.0003
     tau: 0.02
     train_freq: 32
-    action_noise_std: 0.3
-    gamma: 0.98
+    action_noise_std: 0.2
+    gamma: 0.95
     hge_rate_at_start: 0.0 # Use 0.0 for no Heuristic guided exploration
 
   # Example hyperparameters for A2C
   a2c:
-    network_width: 64
+    network_width: 256
     num_layers: 3
-    learning_rate: 0.001
+    learning_rate: 0.0003
     gamma: 0.99
-    gae_lambda: 0.99
-    ent_coef: 0.0141
-    vf_coef: 0.0350
+    gae_lambda: 0.95
+    ent_coef: 0.0030
+    vf_coef: 0.3548
     max_grad_norm: 0.3
 
 #  Example hyperparameters for DQN
   dqn:
     buffer_size: 1000000
     batch_size: 128
-    network_width: 64
+    network_width: 256
     num_layers: 3
     learning_rate: 0.0003
     train_freq: 1
-    target_update_interval: 500
+    target_update_interval: 100
     gamma: 0.95

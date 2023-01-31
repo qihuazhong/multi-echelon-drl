@@ -56,6 +56,7 @@ class BaseStockPolicy(InventoryPolicy):
             else:
                 quantities = self.target_levels - (on_hands + on_orders - unfilled_demands)
 
+        # TODO write test to make sure the two types of input would give the same result
         elif isinstance(observation, dict):
             quantities = []
             for agent, agent_state in observation.items():

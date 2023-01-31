@@ -14,16 +14,19 @@ class Order:
         remaining_lead_time (int): remaining lead time till the supplier observes this order.
 
     """
-    def __init__(self, order_quantity, shipped_quantity: float = 0, remaining_lead_time: int = 0,
-                 integer_order=False) -> None:
+
+    def __init__(
+        self, order_quantity, shipped_quantity: float = 0, remaining_lead_time: int = 0, integer_order=False
+    ) -> None:
         if isinstance(order_quantity, (float, int, np.generic)):
             self.order_quantity = order_quantity
         elif isinstance(order_quantity, Demand):
             self.order_quantity = order_quantity.generator()
         else:
             raise TypeError(
-                f'order_quantity must be an instance of float, int or DemandGenerator, got {type(order_quantity)}'
-                f'{order_quantity}')
+                f"order_quantity must be an instance of float, int or DemandGenerator, got {type(order_quantity)}"
+                f"{order_quantity}"
+            )
 
         if integer_order:
             shipped_quantity = int(shipped_quantity)
@@ -32,8 +35,9 @@ class Order:
         self.remaining_lead_time = remaining_lead_time
 
     def __str__(self):
-        return 'Order(order_quantity: {}, shipped_quantity: {}, remaining_lead_time: {})'.format(
-            self.order_quantity, self.shipped_quantity, self.remaining_lead_time)
+        return "Order(order_quantity: {}, shipped_quantity: {}, remaining_lead_time: {})".format(
+            self.order_quantity, self.shipped_quantity, self.remaining_lead_time
+        )
 
     def __repr__(self):
         return self.__str__()
@@ -43,8 +47,8 @@ class Order:
         return self.order_quantity - self.shipped_quantity
 
     @property
-    def requires_shipping(self):
-        # requires a shipment if order is received by the suppler and unshipped quantity is positive
+    def requires_shipping(self) -> bool:
+        # requires a shipment if order is received by the supplier and unshipped quantity is positive
         return (self.remaining_lead_time <= 0) and (self.shipped_quantity < self.order_quantity)
 
 
@@ -55,18 +59,20 @@ class Shipment:
 
 
 class OrderList(list):
-
     @property
     def requires_shipment_subtotal(self):
         return sum([so.unshipped_quantity for so in self if so.remaining_lead_time <= 0])
 
-    def clean_finished_orders(self):
+    def clean_finished_orders(self) -> None:
         self.sort(key=lambda x: x.unshipped_quantity, reverse=True)
         while (self.__len__() > 0) and (self[-1].unshipped_quantity == 0):
             self.pop()
 
 
 class ShipmentList(list):
+    def __init__(self, seq=(), history_len: int = 4):
+        super().__init__(seq)
+        self.history_len = history_len
 
     def receive_shipments(self):
         arrived_quantity = 0
@@ -79,70 +85,91 @@ class ShipmentList(list):
 
     @property
     def en_route_subtotal(self):
-        return sum([sm.quantity for sm in self])
+        return sum([shipment.quantity for shipment in self])
+
+    @property
+    def shipment_quantity_by_time(self) -> List[float]:
+        shipment_quantity_by_time = []
+
+        for t in range(1, self.history_len + 1):
+            shipment_quantity_by_time.append(
+                sum([shipment.quantity for shipment in self if shipment.time_till_arrival == t])
+            )
+
+        return shipment_quantity_by_time
 
 
 class Arc:
-    """ An Arc object the defines the relationship between two nodes in the supply network
+    """An Arc object the defines the relationship between two nodes in the supply network
 
     Attributes:
         source (str): name of the supplier node_name
         target (str): name of the customer node_name
         sales_orders (OrderList): A list of sales orders
-
-
+        ordering_cost (float): A fixed cost that incurs everytime an order is placed regardless of the order quantity. (TODO)
     """
-    HISTORY_LEN = 4
 
-    def __init__(self, source: str, target: str, information_leadtime, shipment_leadtime,
-                 initial_shipments: Optional[List] = None, initial_sales_orders: Optional[List] = None,
-                 initial_previous_orders=None,
-                 random_init=False):
+    HISTORY_LEN = 4  # TODO
+
+    def __init__(
+        self,
+        source: str,
+        target: str,
+        information_leadtime,
+        shipment_leadtime,
+        initial_shipments: Optional[List] = None,
+        initial_sales_orders: Optional[List] = None,
+        random_init=False,
+        ordering_cost: float = 0.0,
+    ):
         self.source = source
         self.target = target
         self.information_leadtime = information_leadtime
         self.shipment_leadtime = shipment_leadtime
 
+        self.shipments: ShipmentList = None  # Will be initialized in reset()
         self.initial_shipments = initial_shipments
         self.initial_SOs = initial_sales_orders
 
-        self.initial_previous_orders = initial_previous_orders
         self.random_init = random_init
 
         self.reset()
 
-    # noinspection PyAttributeOutsideInit
     def reset(self):
         if self.initial_shipments is None:
-            shmts = [0] * self.shipment_leadtime
+            shipments = [0] * self.shipment_leadtime
         elif self.random_init:
-            shmts = [np.random.randint(self.initial_shipments[0], self.initial_shipments[1]) for t in
-                     range(self.shipment_leadtime)]
+            shipments = [
+                np.random.randint(self.initial_shipments[0], self.initial_shipments[1])
+                for t in range(self.shipment_leadtime)
+            ]
         else:
-            shmts = self.initial_shipments[:self.shipment_leadtime]
+            shipments = self.initial_shipments[: self.shipment_leadtime]  # TODO check length
 
         self.shipments = ShipmentList(
-            [Shipment(shmts[t], t + 1) for t in range(self.shipment_leadtime)])
+            [Shipment(shipments[t], t + 1) for t in range(self.shipment_leadtime)], history_len=self.HISTORY_LEN
+        )
 
         if self.initial_SOs is None:
-            sos = [0] * self.information_leadtime
+            sales_orders = [0] * self.information_leadtime
         elif self.random_init:
-            sos = [np.random.randint(self.initial_SOs[0], self.initial_SOs[1]) for t in
-                   range(self.information_leadtime)]
+            sales_orders = [
+                np.random.randint(self.initial_SOs[0], self.initial_SOs[1]) for t in range(self.information_leadtime)
+            ]
         else:
-            sos = self.initial_SOs[:self.information_leadtime]
+            sales_orders = self.initial_SOs[: self.information_leadtime]  # TODO check length
 
-        self.sales_orders = OrderList(
-            [Order(sos[t], 0, t + 1) for t in range(self.information_leadtime)])
+        self.sales_orders = OrderList([Order(sales_orders[t], 0, t + 1) for t in range(self.information_leadtime)])
 
-        self.previous_orders = ([0] * 4 + shmts + sos)[::-1][:self.HISTORY_LEN]
+        # keep track of previous orders. Sorted by descending time (most recent to ancient), e.g. [order_{t-1},
+        # order_{t-2}, order_{t-3}, order_{t-4}]
+        self.previous_orders = ([0] * 4 + shipments + sales_orders)[::-1][: self.HISTORY_LEN]
 
-        self.in_tansit_quantities = ([0] * 4 + shmts + sos)[::-1][:self.HISTORY_LEN + 1]
+        self.unreceived_quantities = ([0] * 4 + shipments + sales_orders)[::-1][: self.HISTORY_LEN + 1]
+        # print(f'unreceived_quantities: {self.unreceived_quantities}')
 
     def keep_order_history(self, order_quantity):
-        """Track order history for reporting state
-
-        """
+        """Track order history for reporting state"""
         if len(self.previous_orders) >= self.HISTORY_LEN:
             self.previous_orders.pop()
         self.previous_orders.insert(0, order_quantity)
@@ -194,6 +221,8 @@ class Arc:
                     self.shipments.append(Shipment(quantity, self.shipment_leadtime))
                     so.shipped_quantity += quantity
 
+                    # print(f"{self.source} ships {quantity}")
+
                 if not node.is_external_supplier:
                     node.current_inventory -= quantity
 
@@ -205,8 +234,9 @@ class Arc:
         return unfilled_quantity
 
     def __str__(self):
-        return 'arc(source:{}, target:{}, information leadtime:{}, shipment leadtime:{})'.format(
-            self.source, self.target, self.information_leadtime, self.shipment_leadtime)
+        return "arc(source:{}, target:{}, information leadtime:{}, shipment leadtime:{})".format(
+            self.source, self.target, self.information_leadtime, self.shipment_leadtime
+        )
 
     def __repr__(self):
         return self.__str__()
@@ -224,10 +254,18 @@ class Node:
 
     """
 
-    def __init__(self, name, policy=None, is_demand_source: bool = False, demands=None,
-                 is_external_supplier: bool = False,
-                 initial_inventory: Union[int, float, list] = 0.0, holding_cost: float = 0.5,
-                 backorder_cost: float = 1.0, setup_cost: float = .0):
+    def __init__(
+        self,
+        name,
+        policy=None,
+        is_demand_source: bool = False,
+        demands=None,
+        is_external_supplier: bool = False,
+        initial_inventory: Union[int, float, list] = 0.0,
+        holding_cost: float = 0.5,
+        backorder_cost: float = 1.0,
+        setup_cost: float = 0.0,
+    ):
 
         self.name = name
         self.demands = demands
@@ -246,7 +284,7 @@ class Node:
         self.reset()
 
     def __str__(self):
-        return f'Node({self.name}: Inventory: {self.current_inventory}, Unfilled Demand: {self.unfilled_demand}'
+        return f"Node({self.name}: Inventory: {self.current_inventory}, Unfilled Demand: {self.unfilled_demand}"
 
     def __repr__(self):
         return self.__str__()
@@ -258,7 +296,7 @@ class Node:
         elif type(self.initial_inventory) is list:
             self.current_inventory = np.random.randint(self.initial_inventory[0], self.initial_inventory[1])
         else:
-            raise TypeError(f'type {type(self.initial_inventory)} not supported')
+            raise TypeError(f"type {type(self.initial_inventory)} not supported")
 
         self.unfilled_demand = 0
         self.unfilled_independent_demand = 0
@@ -272,12 +310,16 @@ class Node:
         self.holding_cost_history = []
         self.order_history = []
 
+        self.last_backlog = 0
+
         self.current_external_demand = 0
         if self.is_demand_source:
             self.demands.reset()
             self.demand_gen = self.demands.generator()
             self.current_external_demand = next(self.demand_gen)
 
+    # TODO: In future versions, observing and filling independent demand should be implemented as receiving and filling
+    #  an immediate order from an external node generated exclusively for the purpose of issuing independent demand
     def fill_independent_demand(self) -> float:
         """Fulfills (ships) outstanding independent demand
 
@@ -286,22 +328,34 @@ class Node:
             that is not fulfilled due to insufficient inventory
         """
         if self.is_demand_source:
-            quantity = max(0, min(self.current_inventory, self.current_external_demand + self.unfilled_independent_demand))
+            quantity = max(
+                0, min(self.current_inventory, self.current_external_demand + self.unfilled_independent_demand)
+            )
+            # if quantity > 0:
             self.current_inventory -= quantity
 
             unfilled_quantity = self.current_external_demand + self.unfilled_independent_demand - quantity
+
             self.unfilled_independent_demand = unfilled_quantity
 
         else:
-            raise RuntimeError('A node can only fulfill independent demand when is_demand_source is True')
+            raise RuntimeError("A node can only fulfill independent demand when is_demand_source is True")
 
+        # print(f"{self.name} ships {quantity}")
         return self.unfilled_independent_demand
 
     def update_demand(self):
         self.current_external_demand = next(self.demand_gen)
 
+    def update_last_backlog(self):
+        self.last_backlog = self.unfilled_demand
+
     def place_order(self, obs: Union[dict, np.ndarray], arc: Arc, order_quantity=None):
         """Place an order for the specified arc, and update the list of sales orders
+
+        TODO: this method should be moved to the the Arc class to support more granular action (i.e. order per arc)
+
+
         """
 
         if order_quantity is None:
@@ -312,8 +366,11 @@ class Node:
                 order_quantity = self.policy.get_order_quantity({self.name: obs}).item()
 
         if order_quantity < 0:
-            warnings.warn(f'order quantity is {order_quantity} but it should be non-negative. '
-                          f'Quantity will be truncated to 0', category=RuntimeWarning)
+            warnings.warn(
+                f"order quantity is {order_quantity} but it should be non-negative. "
+                f"Quantity will be truncated to 0",
+                category=RuntimeWarning,
+            )
             order_quantity = 0
 
         arc.keep_order_history(order_quantity)
@@ -322,5 +379,5 @@ class Node:
 
         arc.sales_orders.append(new_order)
 
-        arc.in_tansit_quantities.insert(0, order_quantity)
+        arc.unreceived_quantities.insert(0, order_quantity)
         self.order_history.append(order_quantity)

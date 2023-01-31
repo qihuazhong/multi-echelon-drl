@@ -1,3 +1,6 @@
+import sys
+import os
+from abc import ABC
 from typing import Optional, Tuple, Union, Type, Dict, Any
 
 import numpy as np
@@ -7,11 +10,38 @@ from stable_baselines3.common.preprocessing import maybe_transpose
 from stable_baselines3.common.type_aliases import GymEnv, Schedule
 from stable_baselines3.common.utils import is_vectorized_observation
 from stable_baselines3.td3.policies import TD3Policy
-from utils.heuristics import InventoryPolicy
+
+sys.path.append(os.path.abspath(os.path.join("..")) + "/snim")
+
+
+# from policies import BaseStockPolicy
+from utils.heuristics import BaseStockPolicy, InventoryPolicy
 
 import gym
-from stable_baselines3 import TD3
-from stable_baselines3.common.noise import ActionNoise
+from stable_baselines3 import DQN, PPO, TD3, A2C
+from stable_baselines3.common.noise import NormalActionNoise, ActionNoise
+from stable_baselines3.common.callbacks import BaseCallback
+
+
+class HgeRateCallback(BaseCallback):
+    def __init__(self, verbose: int = 0, mu_start=0.5, mu_end=0.0, decay_periods: int = 1000):
+        super().__init__(verbose)
+
+        self.mu_start = mu_start
+        self.mu_end = mu_end
+        self.decay_periods = decay_periods
+
+    def _on_step(self) -> bool:
+        return True
+
+    def on_step(self) -> bool:
+        super().on_step()
+
+        self.model.hge_rate = self.mu_start - (self.mu_start - self.mu_end) * min(
+            1.0, self.num_timesteps / 100 / self.decay_periods
+        )
+
+        return self._on_step()
 
 
 class HgeTD3(TD3):
@@ -130,12 +160,15 @@ class HgeTD3(TD3):
                     n_batch = observation[list(observation.keys())[0]].shape[0]
                 else:
                     n_batch = observation.shape[0]
-
-                # get action from the heuristic
+                # action = np.array([self.action_space.sample() for _ in range(n_batch)])
                 action = np.array([self.heuristic.get_order_quantity(original_obs) for _ in range(n_batch)])
             else:
                 # get action from the heuristic
                 action = self.heuristic.get_order_quantity(original_obs)
+                # print(observation, action)
+                # action = np.array(self.action_space.sample())
         else:
             action, state = self.policy.predict(observation, state, episode_start, deterministic)
         return action, state
+
+        # return super().predict(observation, state, episode_start, deterministic)

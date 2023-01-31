@@ -5,12 +5,12 @@ Recommended Python version: 3.9
 
 ## Installation
 
-```commandline
+```shell
 git clone https://github.com/qihuazhong/multi-echelon-drl.git
 ```
 
 To install the required packages:
-```commandline
+```shell
 pip install --upgrade -r requirements.txt
 ```
 
@@ -23,13 +23,21 @@ The experiments setup and hyperparameters of the DRL algorithm should be defined
 
 ### Commandline arguments
 ```
-usage: train_td3.py [-h] -e E [--name NAME]
+usage: train_a2c.py [-h] -g GLOBAL_INFO -p HYPERPARAMETERS [--name NAME] --ordering-rule ORDERING_RULE --role {Retailer,Wholesaler,Distributor,Manufacturer,MultiFacility} --scenario SCENARIO
+                                                                                                                                                                                              
+options:                                                                                                                                                                                      
+  -h, --help            show this help message and exit                                                                                                                                       
+  -g GLOBAL_INFO, --global-info GLOBAL_INFO                                                                                                                                                   
+                        Whether to return global info of the entire supply chain in the decentralized setting. This argument is ignored in the centralized setting                            
+  -p HYPERPARAMETERS, --hyperparameters HYPERPARAMETERS                                                                                                                                       
+                        Path to the experiment setup file (.yaml)                                                                                                                             
+  --name NAME           Name of the experiment. Used as a prefix for saving log files and models to avoid overwriting previous experiment outputs                                             
+  --ordering-rule ORDERING_RULE                                                                                                                                                               
+                        'a' or 'd+a'
+  --role {Retailer,Wholesaler,Distributor,Manufacturer,MultiFacility}
+                        Should be one of 'Retailer', 'Wholesaler', 'Distributor', 'Manufacturer' or 'MultiFacility' (Centralized control)
+  --scenario SCENARIO   complex or basic
 
-optional arguments:
-  -h, --help   show this help message and exit
-  -e E         Path to the experiment setup file (.yaml)
-  --name NAME  Name of the experiment. Used as a prefix saving log files and models to avoid overwriting        
-               previous experiment outputs
 ```
 
 

@@ -3,9 +3,9 @@ import numpy as np
 
 
 class Demand:
-
-    def __init__(self, demand_pattern='classic_beer_game', data_path=None, size=100, low=None, high=None,
-                 mean=None, sd=None):
+    def __init__(
+        self, demand_pattern="classic_beer_game", data_path=None, size=100, low=None, high=None, mean=None, sd=None
+    ):
         """
         Args:
             demand_pattern: can be a string ('normal', 'uniform', 'classic_beer_game') to specify a stochastic demand
@@ -18,13 +18,13 @@ class Demand:
         """
         self.demands_pattern = demand_pattern
         self._demands: np.ndarray = None
-        self.size = size + 2
+        self.size = size + 3  # TODO
         self.low = low
         self.high = high
         self.mean = mean
         self.sd = sd
         if data_path is not None:
-            self.samples = np.load(data_path)
+            self.samples = np.load(data_path)  # TODO
             self.samples_length = self.samples.shape[0]
             self.sample_pointer = 0
         else:
@@ -38,20 +38,20 @@ class Demand:
         if isinstance(self.demands_pattern, (np.ndarray, list)):
             self._demands = np.asarray(self.demands_pattern)
 
-        elif self.demands_pattern == 'uniform':
+        elif self.demands_pattern == "uniform":
             if (self.low is None) or (self.high is None):
                 raise ValueError('"low" and "high" need to be provided when uniform distribution pattern is specified')
             self._demands = np.random.randint(self.low, self.high + 1, self.size)
 
-        elif self.demands_pattern == 'normal':
+        elif self.demands_pattern == "normal":
             self._demands = np.round(np.maximum(self.mean + self.sd * np.random.randn(self.size), 0)).astype(int)
             if (self.mean is None) or (self.sd is None):
                 raise ValueError('"mean" and "sd" need to be provided when normal distribution pattern is specified')
 
-        elif self.demands_pattern == 'classic_beer_game':
+        elif self.demands_pattern == "classic_beer_game":
             self._demands = np.array([4] * 4 + [8] * (self.size - 4))
 
-        elif self.demands_pattern == 'samples':
+        elif self.demands_pattern == "samples":
             self._demands = self.samples[self.sample_pointer % self.samples_length]
             self.sample_pointer += 1
 
@@ -62,6 +62,6 @@ class Demand:
         # Implemented as a generator, so that the argument 'period' is not needed
         period = 0
         while period < self.size:
-            logging.info(f'Demand generated: {self._demands[period].item()}')
+            logging.info(f"Demand generated: {self._demands[period].item()}")
             yield self._demands[period].item()
             period += 1
