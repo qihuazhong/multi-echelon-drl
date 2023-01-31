@@ -3,40 +3,57 @@ import yaml
 from utils.wrappers import wrap_action_d_plus_a
 from register_envs import register_envs
 from utils.callbacks import SaveEnvStatsCallback, HParamCallback
+from utils.utils import ROLES
 import gym
 from stable_baselines3 import DQN
 from stable_baselines3.common.env_util import make_vec_env
 from stable_baselines3.common.vec_env import VecNormalize
 from stable_baselines3.common.callbacks import EvalCallback
+import time
 
 
 def main():
     parser = argparse.ArgumentParser()
 
     # Adding required argument
-    parser.add_argument("-e", help="Path to the experiment setup file (.yaml)", required=True)
+    parser.add_argument(
+        "-g",
+        "--global-info",
+        type=bool,
+        required=True,
+        help="Whether to return global info of the entire supply chain in the decentralized setting. This argument is ignored in the centralized setting",
+    )
+    parser.add_argument("-p", "--hyperparameters", help="Path to the experiment setup file (.yaml)", required=True)
     parser.add_argument(
         "--name",
-        help="Name of the experiment. Used as a prefix saving log files and models to avoid "
+        help="Name of the experiment. Used as a prefix for saving log files and models to avoid "
         "overwriting previous experiment outputs",
         default="",
         required=False,
     )
+    parser.add_argument("--ordering-rule", type=str, required=True, help="'a' or 'd+a'")
+    parser.add_argument(
+        "--role",
+        type=str,
+        required=True,
+        help="Should be one of 'Retailer', 'Wholesaler', 'Distributor', 'Manufacturer' or 'MultiFacility' (Centralized control)",
+        choices=ROLES,
+    )
+    parser.add_argument("--scenario", type=str, required=True, help="complex or basic")
 
     # Read arguments from command line
     args = parser.parse_args()
 
-    with open(args.e) as fh:
+    with open(args.hyperparameters) as fh:
         setup = yaml.load(fh, Loader=yaml.FullLoader)
-    environment = setup["environment"]
 
-    if environment["role"] == "MultiFacility":
+    if args.e == "MultiFacility":
         raise NotImplementedError("For now the implemented DQN only supports the decentralized setting")
 
-    if environment["scenario"] == "basic":
+    if args.scenario == "basic":
         demand_type = "Normal"
         action_range = [0, 20]
-    elif environment["scenario"] == "complex":
+    elif args.scenario == "complex":
         demand_type = "Uniform"
         action_range = [0, 16]
     else:
@@ -44,7 +61,7 @@ def main():
 
     params = setup["hyperparameters"]["dqn"]
 
-    env_name = f"BeerGame{demand_type}{environment['role']}{'FullInfo'*environment['global_info']}Discrete-v0"
+    env_name = f"BeerGame{demand_type}{args.role}{'FullInfo'*args.global_info}Discrete-v0"
 
     # Register different versions of the beer game to the Gym Registry, so the environment can be created using gym.make
     register_envs()
@@ -52,21 +69,21 @@ def main():
     n_env = 2
 
     def env_factory() -> gym.Env:
-        if environment["ordering_rule"] == "d+a":
+        if args.ordering_rule == "d+a":
             return wrap_action_d_plus_a(
                 gym.make(env_name),
                 offset=-(action_range[1] - action_range[0]) / 2,
                 lb=action_range[0],
                 ub=action_range[1],
             )
-        elif environment["ordering_rule"] == "a":
+        elif args.ordering_rule == "a":
             return gym.make(env_name)
         else:
             raise ValueError
 
     for run in range(setup["runs"]):
 
-        exp_name = f"{args.name}_DQN_{environment['role']}_{environment['scenario']}_{'FullInfo'*environment['global_info']}_{environment['ordering_rule']}_{run}"
+        exp_name = f"{args.name}_DQN_{args.role}_{args.scenario}{'_FullInfo'*args.global_info}_{args.ordering_rule}_{run}_{time.time_ns()}"
         env = VecNormalize(make_vec_env(env_factory, n_env), clip_obs=100, clip_reward=1000)
 
         policy_kwargs = dict(net_arch=[params["network_width"] * params["num_layers"]])
