@@ -134,7 +134,7 @@ def register_envs():
             max_episode_steps=100,
         )
         gym.envs.register(
-            id=f"BeerGameUniform{key}DiscreteFullInfo-v0",
+            id=f"BeerGameUniform{key}FullInfoDiscrete-v0",
             entry_point=uniform_env_factory(role=role, discrete=True, global_observable=True),
             max_episode_steps=100,
         )
@@ -159,7 +159,7 @@ def register_envs():
         )
 
         gym.envs.register(
-            id=f"BeerGameNormal{key}DiscreteFullInfo-v0",
+            id=f"BeerGameNormal{key}FullInfoDiscrete-v0",
             entry_point=normal_env_factory(role=role, discrete=True, global_observable=True),
             max_episode_steps=100,
         )
