@@ -61,6 +61,8 @@ def main():
         raise ValueError
 
     params = setup["hyperparameters"]["td3"]
+    print(args)
+    print(params)
 
     if params["hge_rate_at_start"] > 0 and args.role != "MultiFacility":
         raise NotImplementedError("For now the TD3 with HGE only supports centralized setting")
@@ -79,7 +81,7 @@ def main():
     # Register different versions of the beer game to the Gym Registry, so the environment can be created using gym.make
     register_envs()
 
-    n_env = 2
+    n_env = 8
 
     def env_factory() -> gym.Env:
         if args.ordering_rule == "d+a":

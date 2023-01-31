@@ -42,7 +42,7 @@ def main():
     parser.add_argument("--scenario", type=str, required=True, help="complex or basic")
     # Read arguments from command line
     args = parser.parse_args()
-    print(args)
+
     with open(args.hyperparameters) as fh:
         setup = yaml.load(fh, Loader=yaml.FullLoader)
 
@@ -59,13 +59,14 @@ def main():
         raise ValueError
 
     params = setup["hyperparameters"]["a2c"]
-
+    print(args)
+    print(params)
     env_name = f"BeerGame{demand_type}{args.role}{'FullInfo'*args.global_info}Discrete-v0"
 
     # Register different versions of the beer game to the Gym Registry, so the environment can be created using gym.make
     register_envs()
 
-    n_env = 2
+    n_env = 8
 
     def env_factory() -> gym.Env:
         if args.ordering_rule == "d+a":

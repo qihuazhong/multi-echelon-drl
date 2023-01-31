@@ -60,13 +60,14 @@ def main():
         raise ValueError
 
     params = setup["hyperparameters"]["dqn"]
-
+    print(args)
+    print(params)
     env_name = f"BeerGame{demand_type}{args.role}{'FullInfo'*args.global_info}Discrete-v0"
 
     # Register different versions of the beer game to the Gym Registry, so the environment can be created using gym.make
     register_envs()
 
-    n_env = 2
+    n_env = 8
 
     def env_factory() -> gym.Env:
         if args.ordering_rule == "d+a":
