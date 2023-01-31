@@ -161,6 +161,7 @@ def make_beer_game_basic(player="retailer", max_episode_steps=100, return_dict=F
 
 
 def make_beer_game_normal_multi_facility(
+    global_observable=False,
     agent_managed_facilities=None,
     max_episode_steps=100,
     return_dict=False,
@@ -269,13 +270,18 @@ def make_beer_game_normal_multi_facility(
         action_space = gym.spaces.Box(0, 20, shape=(num_agent_managed_facilities,))
     else:
         action_space = gym.spaces.Discrete(21)
-    observation_space = gym.spaces.Box(low=-np.inf, high=np.inf, shape=(7 * num_agent_managed_facilities,))
+
+    if global_observable:
+        observation_space = gym.spaces.Box(low=-np.inf, high=np.inf, shape=(7 * len(sn.internal_nodes),))
+    else:
+        observation_space = gym.spaces.Box(low=-np.inf, high=np.inf, shape=(7 * num_agent_managed_facilities,))
 
     return InventoryManagementEnvMultiPlayer(
         sn,
         max_episode_steps=max_episode_steps,
         action_space=action_space,
         observation_space=observation_space,
+        global_observable=global_observable,
         return_dict=return_dict,
     )
 
