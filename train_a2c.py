@@ -113,7 +113,7 @@ def main():
             render=False,
         )
         hparam_callback = HParamCallback(hparam_dict=params)
-
+        print("Start training")
         model.learn(
             total_timesteps=setup["max_time_steps"],
             tb_log_name=exp_name,

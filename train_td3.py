@@ -100,7 +100,7 @@ def main():
 
         exp_name = f"{args.name}_TD3_{args.role}_{args.scenario}_{'FullInfo'*args.global_info}_{args.ordering_rule}_{run}_{time.time_ns()}"
         env = VecNormalize(make_vec_env(env_factory, n_env), clip_obs=100, clip_reward=1000)
-        eval_env = VecNormalize(make_vec_env(env_factory, n_env), clip_obs=100, clip_reward=1000)
+        # eval_env = VecNormalize(make_vec_env(env_factory, n_env), clip_obs=100, clip_reward=1000)
 
         policy_kwargs = dict(net_arch=[params["network_width"] * params["num_layers"]])
 
@@ -126,7 +126,7 @@ def main():
 
         hge_callback = HgeRateCallback(mu_start=params["hge_rate_at_start"])
         eval_callback = EvalCallback(
-            eval_env,
+            env,
             callback_on_new_best=SaveEnvStatsCallback(env_save_path=f"./best_models/{exp_name}/"),
             best_model_save_path=f"./best_models/{exp_name}/",
             log_path=f"./logs/{exp_name}/",
@@ -136,7 +136,7 @@ def main():
             render=False,
         )
         hparam_callback = HParamCallback(hparam_dict=params)
-
+        print("Start training")
         model.learn(
             total_timesteps=setup["max_time_steps"],
             tb_log_name=exp_name,

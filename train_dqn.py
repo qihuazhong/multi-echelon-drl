@@ -47,7 +47,7 @@ def main():
     with open(args.hyperparameters) as fh:
         setup = yaml.load(fh, Loader=yaml.FullLoader)
 
-    if args.e == "MultiFacility":
+    if args.role == "MultiFacility":
         raise NotImplementedError("For now the implemented DQN only supports the decentralized setting")
 
     if args.scenario == "basic":
@@ -117,7 +117,7 @@ def main():
         )
 
         hparam_callback = HParamCallback(hparam_dict=params)
-
+        print("Start training")
         model.learn(
             total_timesteps=setup["max_time_steps"],
             tb_log_name=exp_name,
