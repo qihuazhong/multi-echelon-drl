@@ -102,7 +102,7 @@ def main():
         env = VecNormalize(make_vec_env(env_factory, n_env), clip_obs=100, clip_reward=1000)
         # eval_env = VecNormalize(make_vec_env(env_factory, n_env), clip_obs=100, clip_reward=1000)
 
-        policy_kwargs = dict(net_arch=[params["network_width"] * params["num_layers"]])
+        policy_kwargs = dict(net_arch=[params["network_width"]] * params["num_layers"])
 
         n_actions = env.action_space.shape[-1]
         action_noise = NormalActionNoise(

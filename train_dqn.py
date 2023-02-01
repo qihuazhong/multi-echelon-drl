@@ -87,7 +87,7 @@ def main():
         exp_name = f"{args.name}_DQN_{args.role}_{args.scenario}{'_FullInfo'*args.global_info}_{args.ordering_rule}_{run}_{time.time_ns()}"
         env = VecNormalize(make_vec_env(env_factory, n_env), clip_obs=100, clip_reward=1000)
 
-        policy_kwargs = dict(net_arch=[params["network_width"] * params["num_layers"]])
+        policy_kwargs = dict(net_arch=[params["network_width"]] * params["num_layers"])
 
         model = DQN(
             "MlpPolicy",
