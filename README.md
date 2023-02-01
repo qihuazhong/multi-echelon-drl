@@ -11,6 +11,7 @@ git clone https://github.com/qihuazhong/multi-echelon-drl.git
 
 To install the required packages:
 ```shell
+cd multi-echelon-drl
 pip install --upgrade -r requirements.txt
 ```
 
