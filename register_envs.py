@@ -37,7 +37,7 @@ def uniform_env_factory(role: List[str], discrete: bool, global_observable: bool
     def func():
         env = make_beer_game_uniform_multi_facility(
             agent_managed_facilities=role,
-            box_action_space=~discrete,
+            box_action_space=not discrete,
             random_init=True,
             global_observable=global_observable,
         )
@@ -50,7 +50,7 @@ def normal_env_factory(role: List[str], discrete: bool, global_observable: bool)
     def func():
         env = make_beer_game_normal_multi_facility(
             agent_managed_facilities=role,
-            box_action_space=~discrete,
+            box_action_space=not discrete,
             random_init=True,
             global_observable=global_observable,
         )
