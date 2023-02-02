@@ -18,7 +18,7 @@ def main():
     # Adding required argument
     parser.add_argument(
         "-i",
-        "--info",
+        "--info_scope",
         type=str,
         required=True,
         help="Should be one of 'local', 'global'. Whether to return global info of the entire supply chain in the decentralized setting. This argument is ignored in the centralized setting",
@@ -61,7 +61,7 @@ def main():
     params = setup["hyperparameters"]["a2c"]
     print(args)
     print(params)
-    env_name = f"BeerGame{demand_type}{args.role}{'FullInfo'*(args.info=='global')}Discrete-v0"
+    env_name = f"BeerGame{demand_type}{args.role}{'FullInfo'*(args.info_scope=='global')}Discrete-v0"
 
     # Register different versions of the beer game to the Gym Registry, so the environment can be created using gym.make
     register_envs()
@@ -83,7 +83,7 @@ def main():
 
     for run in range(setup["runs"]):
 
-        exp_name = f"{args.name}_A2C_{args.role}_{args.scenario}{'_FullInfo'*(args.info=='global')}_{args.ordering_rule}_{run}_{time.time_ns()}"
+        exp_name = f"{args.name}_A2C_{args.role}_{args.scenario}{'_FullInfo'*(args.info_scope=='global')}_{args.ordering_rule}_{run}_{time.time_ns()}"
         env = VecNormalize(make_vec_env(env_factory, n_env), clip_obs=100, clip_reward=1000)
         eval_env = VecNormalize(make_vec_env(env_factory, n_env), clip_obs=100, clip_reward=1000)
 
