@@ -7,7 +7,7 @@ from utils.utils import ROLES
 import gym
 from stable_baselines3 import DQN
 from stable_baselines3.common.env_util import make_vec_env
-from stable_baselines3.common.vec_env import VecNormalize
+from stable_baselines3.common.vec_env import VecNormalize, SubprocVecEnv
 from stable_baselines3.common.callbacks import EvalCallback
 import time
 
@@ -64,12 +64,11 @@ def main():
     print(params)
     env_name = f"BeerGame{demand_type}{args.role}{'FullInfo'*(args.info_scope=='global')}Discrete-v0"
 
-    # Register different versions of the beer game to the Gym Registry, so the environment can be created using gym.make
-    register_envs()
-
     n_env = 8
 
     def env_factory() -> gym.Env:
+        # Register different versions of the beer game to the Gym Registry, so the environment can be created using gym.make
+        register_envs()
         if args.ordering_rule == "d+a":
             return wrap_action_d_plus_a(
                 gym.make(env_name),
@@ -85,7 +84,8 @@ def main():
     for run in range(setup["runs"]):
 
         exp_name = f"{args.name}_DQN_{args.role}_{args.scenario}{'_FullInfo'*(args.info_scope=='global')}_{args.ordering_rule}_{run}_{time.time_ns()}"
-        env = VecNormalize(make_vec_env(env_factory, n_env), clip_obs=100, clip_reward=1000)
+        env = VecNormalize(make_vec_env(env_factory, n_env, vec_env_cls=SubprocVecEnv), clip_obs=100, clip_reward=1000)
+        # env = VecNormalize(make_vec_env(env_factory, n_env), clip_obs=100, clip_reward=1000)
 
         policy_kwargs = dict(net_arch=[params["network_width"]] * params["num_layers"])
 
