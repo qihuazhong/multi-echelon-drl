@@ -18,7 +18,7 @@ def main():
     # Adding required argument
     parser.add_argument(
         "-i",
-        "--info_scope",
+        "--info-scope",
         type=str,
         required=True,
         help="Should be one of 'local', 'global'. Whether to return global info of the entire supply chain in the decentralized setting. This argument is ignored in the centralized setting",
