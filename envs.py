@@ -292,7 +292,6 @@ def make_beer_game_uniform_multi_facility(
     max_episode_steps=100,
     return_dict=False,
     random_init=True,
-    env_mode="train",
     box_action_space=False,
 ):
     if agent_managed_facilities is None:
@@ -303,16 +302,6 @@ def make_beer_game_uniform_multi_facility(
             "length of agent_managed_facilities >= 1, only box_action_space is allowed. Please specify"
             "box_action_space=True"
         )
-
-    # TODO Make env_mode an attribute of the environment
-    if env_mode == "test":
-        demand_generator = Demand(
-            "samples", data_path="./data/deepbeerinventory/demandTs0-9.npy", size=max_episode_steps
-        )
-    elif env_mode == "train":
-        demand_generator = Demand("uniform", low=0, high=8, size=max_episode_steps)
-    else:
-        raise ValueError()
 
     array_index = {"on_hand": 0, "unreceived_pipeline": [3, 4, 5, 6], "unfilled_demand": 1, "latest_demand": 2}
 
