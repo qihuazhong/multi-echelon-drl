@@ -148,10 +148,10 @@ def make_beer_game_basic(player="retailer", max_episode_steps=100, return_dict=F
     nodes = [demand_source, retailer, wholesaler, distributor, manufacturer, supply_source]
 
     arcs = [
-        Arc("is_external_supplier", "manufacturer", 2, 2, initial_previous_orders=[0, 0, 0, 0]),
-        Arc("manufacturer", "distributor", 2, 2, initial_previous_orders=[0, 0, 0, 0]),
-        Arc("distributor", "wholesaler", 2, 2, initial_previous_orders=[0, 0, 0, 0]),
-        Arc("wholesaler", "retailer", 2, 2, initial_previous_orders=[0, 0, 0, 0]),
+        Arc("is_external_supplier", "manufacturer", 2, 2),
+        Arc("manufacturer", "distributor", 2, 2),
+        Arc("distributor", "wholesaler", 2, 2),
+        Arc("wholesaler", "retailer", 2, 2),
         Arc("retailer", "is_demand_source", 0, 0),
     ]
 
