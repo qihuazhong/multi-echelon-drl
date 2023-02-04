@@ -302,6 +302,7 @@ def make_beer_game_uniform_multi_facility(
             "length of agent_managed_facilities >= 1, only box_action_space is allowed. Please specify"
             "box_action_space=True"
         )
+    demand_generator = Demand("uniform", low=0, high=8, size=max_episode_steps)
 
     array_index = {"on_hand": 0, "unreceived_pipeline": [3, 4, 5, 6], "unfilled_demand": 1, "latest_demand": 2}
 
