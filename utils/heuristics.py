@@ -10,10 +10,17 @@ class InventoryPolicy:
 
 class BaseStockPolicy(InventoryPolicy):
 
-    def __init__(self, target_levels: Union[int, float, List, np.ndarray],
-                 array_index: Optional[dict] = None,
-                 state_dim_per_facility=7,
-                 lb=0, ub=16, rule: str = 'a'):
+
+class BaseStockPolicy(InventoryPolicy):
+    def __init__(
+        self,
+        target_levels: Union[int, float, List, np.ndarray],
+        array_index: Optional[dict] = None,
+        state_dim_per_facility=7,
+        lb=0,
+        ub=np.inf,
+        rule: str = "a",
+    ):
         """
 
         Args:
@@ -41,17 +48,18 @@ class BaseStockPolicy(InventoryPolicy):
 
         """
         if isinstance(observation, np.ndarray):
-            state_len = observation.shape[1]
             step = self.state_dim_per_facility
 
             agent_states = observation.reshape(-1)
+            state_len = agent_states.shape[0]
 
-            on_hands = agent_states[np.arange(self.array_index['on_hand'], state_len, step)]
-            unfilled_demands = agent_states[np.arange(self.array_index['unfilled_demand'], state_len, step)]
+            on_hands = agent_states[np.arange(self.array_index["on_hand"], state_len, step)]
+            unfilled_demands = agent_states[np.arange(self.array_index["unfilled_demand"], state_len, step)]
             on_orders = np.sum(
-                [agent_states[np.arange(i, state_len, step)] for i in self.array_index['unreceived_pipeline']], axis=0)
-            if self.rule == 'd+a':
-                latest_demand = agent_states[np.arange(self.array_index['latest_demand'], state_len, step)]
+                [agent_states[np.arange(i, state_len, step)] for i in self.array_index["unreceived_pipeline"]], axis=0
+            )
+            if self.rule == "d+a":
+                latest_demand = agent_states[np.arange(self.array_index["latest_demand"], state_len, step)]
                 quantities = self.target_levels - (on_hands + on_orders - unfilled_demands) - latest_demand
             else:
                 quantities = self.target_levels - (on_hands + on_orders - unfilled_demands)
@@ -60,14 +68,14 @@ class BaseStockPolicy(InventoryPolicy):
         elif isinstance(observation, dict):
             quantities = []
             for agent, agent_state in observation.items():
-                on_hands = agent_state['on_hand']
-                unfilled_demands = agent_state['unfilled_demand']
+                on_hands = agent_state["on_hand"]
+                unfilled_demands = agent_state["unfilled_demand"]
 
-                on_orders = sum([agent_state[f'unreceived_pipeline_{i}'] for i in range(4)])
+                on_orders = sum([agent_state[f"unreceived_pipeline_{i}"] for i in range(4)])
                 # unfilled_demand = agent_state['unfilled_demand']
                 quantity = self.target_levels - (on_hands + on_orders - unfilled_demands)
-                if self.rule == 'd+a':
-                    quantity -= agent_state['latest_demand']
+                if self.rule == "d+a":
+                    quantity -= agent_state["latest_demand"]
                 quantities.append(quantity)
         else:
             raise TypeError
