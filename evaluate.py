@@ -2,6 +2,7 @@ from typing import Dict, Type, List
 import os
 
 import numpy as np
+import pandas as pd
 from stable_baselines3.common.base_class import BaseAlgorithm
 
 from utils.utils import ROLES
@@ -9,12 +10,14 @@ from utils.wrappers import wrap_action_d_plus_a
 from register_envs import register_envs
 
 import argparse
-import yaml
 import gym
 from stable_baselines3 import DQN, TD3, A2C
 from stable_baselines3.common.env_util import make_vec_env
 from stable_baselines3.common.vec_env import VecNormalize
 from stable_baselines3.common.evaluation import evaluate_policy
+from collections import namedtuple
+
+Result = namedtuple("Result", ["algo", "model_dir", "info_scope", "ordering_rule", "role", "scenario", "mean_rewards"])
 
 
 def main():
@@ -27,7 +30,7 @@ def main():
     )
     parser.add_argument(
         "-i",
-        "--info",
+        "--info-scope",
         type=str,
         required=True,
         help="Should be one of 'local', 'global'. Whether to return global info of the entire supply chain in the decentralized setting. This argument is ignored in the centralized setting",
@@ -57,9 +60,9 @@ def main():
 
     # If td3, make the continuous environment, otherwise make the discrete environment
     if args.algo == "td3":
-        env_name = f"BeerGame{demand_type}{args.role}{'FullInfo' * (args.info=='global')}-v0"
+        env_name = f"BeerGame{demand_type}{args.role}{'FullInfo' * (args.info_scope=='global')}-v0"
     else:
-        env_name = f"BeerGame{demand_type}{args.role}{'FullInfo' * (args.info=='global')}Discrete-v0"
+        env_name = f"BeerGame{demand_type}{args.role}{'FullInfo' * (args.info_scope=='global')}Discrete-v0"
     print("Env id: ", env_name)
 
     def env_factory() -> gym.Env:
@@ -76,18 +79,23 @@ def main():
             raise ValueError
 
     algos: Dict[str, Type[BaseAlgorithm]] = {"td3": TD3, "a2c": A2C, "dqn": DQN}
-    sub_dirs: List[str] = next(os.walk(args.models_dir))[1]
-    experiment_prefix: str = (
-        f"_{args.algo.upper()}_{args.role}_{args.scenario}_{'FullInfo'*(args.info=='global')}_{args.ordering_rule}"
-    )
+    sub_dirs: List[str] = next(os.walk(args.models_dir + "/best_models/"))[1]
+    experiment_prefix: str = f"_{args.algo.upper()}_{args.role}_{args.scenario}{'_FullInfo'*(args.info_scope=='global')}_{args.ordering_rule}"
 
+    results: List[Result] = []
+    mean_rewards = []
     for sub_dir in sub_dirs:
         if experiment_prefix in sub_dir:
             rewards = []
-            print(f"Model: {sub_dir}")
             env = make_vec_env(env_factory, n_envs=1)
-            env = VecNormalize.load(f"{args.models_dir}/{sub_dir}/best_env", env)
-            model = algos[args.algo].load(f"{args.models_dir}/{sub_dir}/best_model.zip", env=env)
+            env = VecNormalize.load(f"{args.models_dir+'/best_models'}/{sub_dir}/best_env", env)
+
+            # Check whether the training is complete
+            evaluation_log = np.load(f"{args.models_dir+'/logs'}/{sub_dir}/evaluations.npz")
+            if evaluation_log["timesteps"].max() < 10_000_000:
+                print(f"Warning: Model {sub_dir} trained for {evaluation_log['timesteps'].max()} steps only")
+
+            model = algos[args.algo].load(f"{args.models_dir+'/best_models'}/{sub_dir}/best_model.zip", env=env)
 
             for i in range(args.n_eval_episodes):
                 np.random.seed(i)
@@ -98,8 +106,27 @@ def main():
                     n_eval_episodes=1,
                 )
                 rewards.append(mean_reward)
-            print(f"Rewards: {rewards}")
-            print(f"Mean reward:{np.mean(rewards)}")
+            # print(f"Rewards: {rewards}")
+            results.append(
+                Result(
+                    algo=args.algo,
+                    model_dir=sub_dir,
+                    info_scope=args.info_scope,
+                    ordering_rule=args.ordering_rule,
+                    role=args.role,
+                    scenario=args.scenario,
+                    mean_rewards=np.mean(rewards),
+                )
+            )
+            print(f"\tModel: {sub_dir}: Mean reward:{np.mean(rewards)} over {len(rewards)} episodes")
+            mean_rewards.append(np.mean(rewards))
+
+    print(
+        f"\tBest mean rewards {np.max(mean_rewards)}, average mean rewards over {len(mean_rewards)} models: {np.mean(mean_rewards)}"
+    )
+
+    df = pd.DataFrame(results)
+    df.to_csv(f"./df_{args.algo}.csv", index=False, mode="a")
 
 
 if __name__ == "__main__":
