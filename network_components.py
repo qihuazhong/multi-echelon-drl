@@ -4,6 +4,8 @@ from typing import Union, List, Optional
 from utils.demands import Demand
 import numpy as np
 
+from utils.heuristics import InventoryPolicy
+
 
 class Order:
     """A (production or purchase) order object that is initiated by a node_name.
@@ -132,7 +134,7 @@ class Arc:
         self.initial_SOs = initial_sales_orders
 
         self.random_init = random_init
-
+        self.ordering_cost = ordering_cost
         self.reset()
 
     def reset(self):
@@ -247,17 +249,17 @@ class Node:
 
     Attributes:
         name (str): name of the node_name
-        policy : this node_name's predefined ordering policy
+        fallback_policy : this node_name's predefined ordering policy
         is_demand_source (bool): whether this node_name has external (independent) demand
-        is_external_supplier (bool): if `True`, then this node_name has unlimited capacity and does not incur cost, but may
-            still be subject to leadtimes.
+        is_external_supplier (bool): if `True`, then this node_name has unlimited capacity and does not incur cost, but
+        may still be subject to lead times.
 
     """
 
     def __init__(
         self,
         name,
-        policy=None,
+        fallback_policy=None,
         is_demand_source: bool = False,
         demands=None,
         is_external_supplier: bool = False,
@@ -269,9 +271,9 @@ class Node:
 
         self.name = name
         self.demands = demands
-        self.policy = policy
+        self.fallback_policy: InventoryPolicy = fallback_policy
 
-        self.is_demand_source = is_demand_source  # 'demand node_name' with independent demand
+        self.is_demand_source = is_demand_source  # node with independent demand
         self.current_external_demand = None
         self.is_external_supplier = is_external_supplier
 
@@ -318,6 +320,15 @@ class Node:
             self.demand_gen = self.demands.generator()
             self.current_external_demand = next(self.demand_gen)
 
+    def set_fallback_policy(self, new_policy: InventoryPolicy) -> None:
+        """Set a new inventory policy for this node.
+
+        Args:
+            new_policy:
+
+        """
+        self.fallback_policy = new_policy
+
     # TODO: In future versions, observing and filling independent demand should be implemented as receiving and filling
     #  an immediate order from an external node generated exclusively for the purpose of issuing independent demand
     def fill_independent_demand(self) -> float:
@@ -350,24 +361,33 @@ class Node:
     def update_last_backlog(self):
         self.last_backlog = self.unfilled_demand
 
-    def place_order(self, obs: Union[dict, np.ndarray], arc: Arc, order_quantity=None):
-        """Place an order for the specified arc, and update the list of sales orders
-
+    def place_order(self, obs: Union[dict, np.ndarray], arc: Arc, order_quantity=None) -> None:
+        """Place an order for the specified arc, and update the list of sales orders.
+        If order_quantity is not provided, the fallback order policy will be used to calculate the order quantity.
         TODO: this method should be moved to the the Arc class to support more granular action (i.e. order per arc)
 
+        Args:
+            obs:
+            arc:
+            order_quantity:
+
+        Returns:
 
         """
 
         if order_quantity is None:
-            # No quantity is provided, fallback to the node policy
+            # No quantity is provided, fallback to the default node policy
             if isinstance(obs, np.ndarray):
-                order_quantity = self.policy.get_order_quantity(obs).item()
+                order_quantity = self.fallback_policy.get_order_quantity(obs).item()
+            elif isinstance(obs, dict):
+                order_quantity = self.fallback_policy.get_order_quantity({self.name: obs}).item()
             else:
-                order_quantity = self.policy.get_order_quantity({self.name: obs}).item()
+                raise TypeError(f"observation type {type(obs)} not supported")
 
         if order_quantity < 0:
             warnings.warn(
-                f"order quantity is {order_quantity} but it should be non-negative. "
+                # action="always",
+                message=f"{self.name} order quantity is {order_quantity} but it should be non-negative. "
                 f"Quantity will be truncated to 0",
                 category=RuntimeWarning,
             )

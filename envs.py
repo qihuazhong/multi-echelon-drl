@@ -140,10 +140,10 @@ def make_beer_game_basic(player="retailer", max_episode_steps=100, return_dict=F
     bs_0 = BaseStockPolicy(0)
 
     demand_source = Node(name="is_demand_source", is_demand_source=True, demands=demand_generator)
-    retailer = Node(name="retailer", holding_cost=2.0, backorder_cost=2.0, policy=bs_8)
-    wholesaler = Node(name="wholesaler", holding_cost=2.0, backorder_cost=0.0, policy=bs_8)
-    distributor = Node(name="distributor", holding_cost=2.0, backorder_cost=0.0, policy=bs_0)
-    manufacturer = Node(name="manufacturer", holding_cost=2.0, backorder_cost=0.0, policy=bs_0)
+    retailer = Node(name="retailer", holding_cost=2.0, backorder_cost=2.0, fallback_policy=bs_8)
+    wholesaler = Node(name="wholesaler", holding_cost=2.0, backorder_cost=0.0, fallback_policy=bs_8)
+    distributor = Node(name="distributor", holding_cost=2.0, backorder_cost=0.0, fallback_policy=bs_0)
+    manufacturer = Node(name="manufacturer", holding_cost=2.0, backorder_cost=0.0, fallback_policy=bs_0)
     supply_source = Node(name="is_external_supplier", is_external_supplier=True)
     nodes = [demand_source, retailer, wholesaler, distributor, manufacturer, supply_source]
 
@@ -188,7 +188,12 @@ def make_beer_game_normal_multi_facility(
     else:
         raise ValueError()
 
-    array_index = {"on_hand": 0, "unreceived_pipeline": [3, 4, 5, 6], "unfilled_demand": 1, "latest_demand": 2}
+    array_index = {
+        "on_hand": 0,
+        "unfilled_demand": 1,
+        "latest_demand": 2,
+        "unreceived_pipeline": [3, 4, 5, 6],
+    }
 
     bsp_48 = BaseStockPolicy(target_levels=[48], array_index=array_index, state_dim_per_facility=7)
     bsp_43 = BaseStockPolicy(target_levels=[43], array_index=array_index, state_dim_per_facility=7)
@@ -209,18 +214,22 @@ def make_beer_game_normal_multi_facility(
         initial_inventory=init_inventory,
         holding_cost=1.0,
         backorder_cost=10,
-        policy=bsp_48,
+        fallback_policy=bsp_48,
         is_demand_source=True,
         demands=demand_generator,
     )
     wholesaler = Node(
-        name="wholesaler", initial_inventory=init_inventory, holding_cost=0.75, backorder_cost=0, policy=bsp_43
+        name="wholesaler", initial_inventory=init_inventory, holding_cost=0.75, backorder_cost=0, fallback_policy=bsp_43
     )
     distributor = Node(
-        name="distributor", initial_inventory=init_inventory, holding_cost=0.5, backorder_cost=0, policy=bsp_41
+        name="distributor", initial_inventory=init_inventory, holding_cost=0.5, backorder_cost=0, fallback_policy=bsp_41
     )
     manufacturer = Node(
-        name="manufacturer", initial_inventory=init_inventory, holding_cost=0.25, backorder_cost=0, policy=bsp_30
+        name="manufacturer",
+        initial_inventory=init_inventory,
+        holding_cost=0.25,
+        backorder_cost=0,
+        fallback_policy=bsp_30,
     )
     supply_source = Node(name="external_supplier", is_external_supplier=True)
     nodes = [retailer, wholesaler, distributor, manufacturer, supply_source]
@@ -304,12 +313,10 @@ def make_beer_game_uniform_multi_facility(
         )
     demand_generator = Demand("uniform", low=0, high=8, size=max_episode_steps)
 
-    array_index = {"on_hand": 0, "unreceived_pipeline": [3, 4, 5, 6], "unfilled_demand": 1, "latest_demand": 2}
+    array_index = {"on_hand": 0, "unfilled_demand": 1, "latest_demand": 2, "unreceived_pipeline": [3, 4, 5, 6]}
 
     bsp_19 = BaseStockPolicy(target_levels=[19], array_index=array_index, state_dim_per_facility=7)
-
     bsp_20 = BaseStockPolicy(target_levels=[20], array_index=array_index, state_dim_per_facility=7)
-
     bsp_14 = BaseStockPolicy(target_levels=[14], array_index=array_index, state_dim_per_facility=7)
 
     if random_init:
@@ -326,18 +333,22 @@ def make_beer_game_uniform_multi_facility(
         initial_inventory=init_inventory,
         holding_cost=0.5,
         backorder_cost=1,
-        policy=bsp_19,
+        fallback_policy=bsp_19,
         is_demand_source=True,
         demands=demand_generator,
     )
     wholesaler = Node(
-        name="wholesaler", initial_inventory=init_inventory, holding_cost=0.5, backorder_cost=1, policy=bsp_20
+        name="wholesaler", initial_inventory=init_inventory, holding_cost=0.5, backorder_cost=1, fallback_policy=bsp_20
     )
     distributor = Node(
-        name="distributor", initial_inventory=init_inventory, holding_cost=0.5, backorder_cost=1, policy=bsp_20
+        name="distributor", initial_inventory=init_inventory, holding_cost=0.5, backorder_cost=1, fallback_policy=bsp_20
     )
     manufacturer = Node(
-        name="manufacturer", initial_inventory=init_inventory, holding_cost=0.5, backorder_cost=1, policy=bsp_14
+        name="manufacturer",
+        initial_inventory=init_inventory,
+        holding_cost=0.5,
+        backorder_cost=1,
+        fallback_policy=bsp_14,
     )
     supply_source = Node(name="external_supplier", is_external_supplier=True)
     nodes = [retailer, wholesaler, distributor, manufacturer, supply_source]
@@ -429,16 +440,20 @@ def make_beer_game_normal(player="retailer", max_period=100, return_dict=False, 
 
     demand_source = Node(name="is_demand_source", is_demand_source=True, demands=demand_generator)
     retailer = Node(
-        name="retailer", initial_inventory=init_inventory, holding_cost=1.0, backorder_cost=10, policy=bsp_48
+        name="retailer", initial_inventory=init_inventory, holding_cost=1.0, backorder_cost=10, fallback_policy=bsp_48
     )
     wholesaler = Node(
-        name="wholesaler", initial_inventory=init_inventory, holding_cost=0.75, backorder_cost=0, policy=bsp_43
+        name="wholesaler", initial_inventory=init_inventory, holding_cost=0.75, backorder_cost=0, fallback_policy=bsp_43
     )
     distributor = Node(
-        name="distributor", initial_inventory=init_inventory, holding_cost=0.5, backorder_cost=0, policy=bsp_41
+        name="distributor", initial_inventory=init_inventory, holding_cost=0.5, backorder_cost=0, fallback_policy=bsp_41
     )
     manufacturer = Node(
-        name="manufacturer", initial_inventory=init_inventory, holding_cost=0.25, backorder_cost=0, policy=bsp_30
+        name="manufacturer",
+        initial_inventory=init_inventory,
+        holding_cost=0.25,
+        backorder_cost=0,
+        fallback_policy=bsp_30,
     )
     supply_source = Node(name="is_external_supplier", is_external_supplier=True)
     nodes = [demand_source, retailer, wholesaler, distributor, manufacturer, supply_source]
@@ -528,11 +543,15 @@ def make_beer_game(
         init_sales_orders = [[4, 4]] * 4
 
     retailer = Node(
-        name="retailer", initial_inventory=init_inventory, policy=bs_32, is_demand_source=True, demands=demand_generator
+        name="retailer",
+        initial_inventory=init_inventory,
+        fallback_policy=bs_32,
+        is_demand_source=True,
+        demands=demand_generator,
     )
-    wholesaler = Node(name="wholesaler", initial_inventory=init_inventory, policy=bs_32)
-    distributor = Node(name="distributor", initial_inventory=init_inventory, policy=bs_32)
-    manufacturer = Node(name="manufacturer", initial_inventory=init_inventory, policy=bs_24)
+    wholesaler = Node(name="wholesaler", initial_inventory=init_inventory, fallback_policy=bs_32)
+    distributor = Node(name="distributor", initial_inventory=init_inventory, fallback_policy=bs_32)
+    manufacturer = Node(name="manufacturer", initial_inventory=init_inventory, fallback_policy=bs_24)
     supply_source = Node(name="external_supplier", is_external_supplier=True)
     nodes = [retailer, wholesaler, distributor, manufacturer, supply_source]
 
