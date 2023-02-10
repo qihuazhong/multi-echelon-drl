@@ -157,11 +157,12 @@ class HgeTD3(TD3):
         if not deterministic and np.random.rand() < self.hge_rate**2:
             if is_vectorized_observation(maybe_transpose(observation, self.observation_space), self.observation_space):
                 if isinstance(self.observation_space, gym.spaces.Dict):
-                    n_batch = observation[list(observation.keys())[0]].shape[0]
+                    n_envs = observation[list(observation.keys())[0]].shape[0]
                 else:
-                    n_batch = observation.shape[0]
+                    n_envs = observation.shape[0]
                 # action = np.array([self.action_space.sample() for _ in range(n_batch)])
-                action = np.array([self.heuristic.get_order_quantity(original_obs) for _ in range(n_batch)])
+                action = np.array([self.heuristic.get_order_quantity(original_obs[i]) for i in range(n_envs)])
+                # action = self.heuristic.get_order_quantity(original_obs, n_envs=n_envs)
             else:
                 # get action from the heuristic
                 action = self.heuristic.get_order_quantity(original_obs)
