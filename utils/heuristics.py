@@ -1,14 +1,41 @@
 from typing import Union, Optional, List
 import numpy as np
+from stable_baselines3.common.base_class import BaseAlgorithm
+from stable_baselines3.common.vec_env import VecNormalize
 
 
 class InventoryPolicy:
-
     def get_order_quantity(self, observation: Union[dict, np.ndarray]):
         raise NotImplementedError
 
 
-class BaseStockPolicy(InventoryPolicy):
+class DRLPolicy(InventoryPolicy):
+    """Deep reinforcement learning agent policy that maps observations to order quantities."""
+
+    def __init__(self, model: BaseAlgorithm, vec_normalize: Optional[VecNormalize] = None):
+        self.model: BaseAlgorithm = model
+        self.vec_normalize: Optional[VecNormalize] = vec_normalize
+
+    def update_model(self, target_model: BaseAlgorithm) -> None:
+        self.model.policy.load_state_dict(target_model.policy.state_dict())
+
+    def update_vec_norm(self, target_vec_normalize: VecNormalize) -> None:
+        self.vec_normalize.__setstate__(target_vec_normalize.__getstate__())
+        self.vec_normalize.num_envs = 1
+
+    def get_order_quantity(self, observation: Union[dict, np.ndarray]):
+        if isinstance(observation, np.ndarray):
+            raise NotImplementedError(f"{type(observation)} observation type not supported yet")
+            # return self.model.predict(observation)
+
+        elif isinstance(observation, dict):
+            observation = np.array(
+                [list(state.values()) for agent, state in observation.items()], dtype=np.float32
+            ).flatten()
+
+            actions, _ = self.model.predict(self.vec_normalize.normalize_obs(observation), deterministic=True)
+            # print(observation, actions)
+            return actions - 8 + observation[2]
 
 
 class BaseStockPolicy(InventoryPolicy):
@@ -17,7 +44,7 @@ class BaseStockPolicy(InventoryPolicy):
         target_levels: Union[int, float, List, np.ndarray],
         array_index: Optional[dict] = None,
         state_dim_per_facility=7,
-        lb=0,
+        lb=-np.inf,
         ub=np.inf,
         rule: str = "a",
     ):
