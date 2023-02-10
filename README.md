@@ -51,7 +51,7 @@ python train_td3.py -e setup_exmaple_centralized.yaml
 Or train a TD3 / DQN / A2C  without HGE in the decentralized setting:
 
 ```commandline
-python train_td3.py -e setup_exmaple_decentralized.yaml
-python train_a2c.py -e setup_exmaple_decentralized.yaml
-python train_dqn.py -e setup_exmaple_decentralized.yaml
+python train_td3.py -p setup_exmaple_decentralized.yaml --info local --ordering-rule 'd+a' --role Manufacturer --scenario complex 
+python train_a2c.py -p setup_exmaple_decentralized.yaml --info local --ordering-rule 'd+a' --role Manufacturer --scenario complex 
+python train_dqn.py -p setup_exmaple_decentralized.yaml --info local --ordering-rule 'd+a' --role Manufacturer --scenario complex 
 ```
