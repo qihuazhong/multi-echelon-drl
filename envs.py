@@ -97,6 +97,7 @@ class InventoryManagementEnvMultiPlayer(ABC, gym.Env):
 
         if self.period >= self.max_episode_steps:
             self.terminal = True
+            self.sn.before_action(self.period)
         else:
             self.sn.before_action(self.period)
 
