@@ -1,5 +1,6 @@
 import logging
 import numpy as np
+import pandas as pd
 
 
 class Demand:
@@ -24,7 +25,7 @@ class Demand:
         self.mean = mean
         self.sd = sd
         if data_path is not None:
-            self.samples = np.load(data_path)  # TODO
+            self.samples = pd.read_csv(data_path, header=None).values.reshape(-1)
             self.samples_length = self.samples.shape[0]
             self.sample_pointer = 0
         else:
@@ -52,8 +53,8 @@ class Demand:
             self._demands = np.array([4] * 4 + [8] * (self.size - 4))
 
         elif self.demands_pattern == "samples":
-            self._demands = self.samples[self.sample_pointer % self.samples_length]
-            self.sample_pointer += 1
+            self._demands = self.samples
+            self.sample_pointer = 0
 
         else:
             raise ValueError("Demand pattern not recognized")
