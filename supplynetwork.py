@@ -65,6 +65,18 @@ class SupplyNetwork:
     def __repr__(self):
         return self.__str__()
 
+    @lru_cache
+    def get_customer_names(self, node_name: str) -> List[str]:
+        """Given a node name, return the list of the node's customer names"""
+
+        arc_keys: List[Tuple[str]] = list(self.arcs.keys())
+
+        return [target for source, target in arc_keys if source == node_name]
+
+    @lru_cache
+    def get_outgoing_arcs(self, node_name: str) -> List[Arc]:
+        return [arc for (source, target), arc in self.arcs.items() if source == node_name]
+
     def summary(self):
         print(
             "=" * 10,
