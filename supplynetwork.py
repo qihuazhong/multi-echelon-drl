@@ -358,7 +358,7 @@ def from_dict(network_config: dict) -> SupplyNetwork:
     # Create node_name instances according to the dictionary. Optional values are defaulted to 0 or False if not provided.
     node: dict
     for node in network_config["nodes"]:
-        if node.get("demand_path", None):
+        if node.get("demand_path", None) is None:
             is_demand_source = False
             demand_generator = None
         else:
