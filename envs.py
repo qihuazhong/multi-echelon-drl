@@ -1,6 +1,5 @@
 import logging
-from abc import ABC
-from typing import Union, Tuple, List, Any, Dict
+from typing import Union, Tuple, List, Dict
 import numpy as np
 from numpy import ndarray
 
@@ -15,18 +14,7 @@ from gym.utils import seeding
 logging.basicConfig(level=logging.WARNING, handlers=[logging.StreamHandler()])
 
 
-class InventoryManagementEnv(gym.Env, ABC):
-    def __init__(self, supply_chain_network, max_episode_steps: int, visible_states=None, return_dict=False):
-        raise NotImplemented
-
-    def reset(self):
-        raise NotImplemented
-
-    def step(self, quantity):
-        raise NotImplemented
-
-
-class InventoryManagementEnvMultiPlayer(ABC, gym.Env):
+class InventoryManagementEnvMultiPlayer(gym.Env):
     def __init__(
         self,
         supply_network: SupplyNetwork,
@@ -61,7 +49,7 @@ class InventoryManagementEnvMultiPlayer(ABC, gym.Env):
 
         self.seed()
 
-    def reset(self):
+    def reset(self) -> np.ndarray | dict:
         self.terminal = False
         self.sn.reset()
         self.period = 0
@@ -117,48 +105,8 @@ class InventoryManagementEnvMultiPlayer(ABC, gym.Env):
         self.np_random, seed = seeding.np_random(seed)
         return [seed]
 
-
-def make_beer_game_basic(player="retailer", max_episode_steps=100, return_dict=False, seed=None):
-    """
-    A basic scenario described in Oroojlooyjadid et al. page 19.
-    Args:
-        player:
-        max_episode_steps:
-        return_dict:
-        seed:
-    Returns:
-
-    """
-    if seed:
-        np.random.seed(seed)
-    # else:
-    # make sure the environment is random in parallel processing
-    # np.random.seed(int(time.time()))
-
-    demand_generator = Demand("uniform", low=0, high=2, size=max_episode_steps)
-
-    bs_8 = BaseStockPolicy(8)
-    bs_0 = BaseStockPolicy(0)
-
-    demand_source = Node(name="is_demand_source", is_demand_source=True, demands=demand_generator)
-    retailer = Node(name="retailer", holding_cost=2.0, backorder_cost=2.0, fallback_policy=bs_8)
-    wholesaler = Node(name="wholesaler", holding_cost=2.0, backorder_cost=0.0, fallback_policy=bs_8)
-    distributor = Node(name="distributor", holding_cost=2.0, backorder_cost=0.0, fallback_policy=bs_0)
-    manufacturer = Node(name="manufacturer", holding_cost=2.0, backorder_cost=0.0, fallback_policy=bs_0)
-    supply_source = Node(name="is_external_supplier", is_external_supplier=True)
-    nodes = [demand_source, retailer, wholesaler, distributor, manufacturer, supply_source]
-
-    arcs = [
-        Arc("is_external_supplier", "manufacturer", 2, 2),
-        Arc("manufacturer", "distributor", 2, 2),
-        Arc("distributor", "wholesaler", 2, 2),
-        Arc("wholesaler", "retailer", 2, 2),
-        Arc("retailer", "is_demand_source", 0, 0),
-    ]
-
-    scn = SupplyNetwork(nodes=nodes, arcs=arcs, agent_managed_facilities=[player])
-
-    return InventoryManagementEnv(scn, return_dict=return_dict, max_episode_steps=max_episode_steps)
+    def render(self, mode="human"):
+        pass
 
 
 def make_beer_game_normal_multi_facility(
@@ -167,7 +115,6 @@ def make_beer_game_normal_multi_facility(
     max_episode_steps=100,
     return_dict=False,
     random_init=False,
-    env_mode="train",
     box_action_space=False,
 ):
     if agent_managed_facilities is None:
@@ -179,15 +126,7 @@ def make_beer_game_normal_multi_facility(
             "box_action_space=True"
         )
 
-    # TODO Make env_mode an attribute of the environment
-    if env_mode == "test":
-        demand_generator = Demand(
-            "samples", data_path="./data/deepbeerinventory/demandTs1-10-2.npy", size=max_episode_steps
-        )
-    elif env_mode == "train":
-        demand_generator = Demand("normal", mean=10, sd=2, size=max_episode_steps)
-    else:
-        raise ValueError()
+    demand_generator = Demand("normal", mean=10, sd=2, size=max_episode_steps)
 
     array_index = {
         "on_hand": 0,
@@ -414,94 +353,6 @@ def make_beer_game_uniform_multi_facility(
         global_observable=global_observable,
         return_dict=return_dict,
     )
-
-
-def make_beer_game_normal(player="retailer", max_period=100, return_dict=False, random_init=False, seed=None):
-    if seed:
-        np.random.seed(seed)
-    # else:
-    # make sure the environment is random in parallel processing
-    # np.random.seed(int(time.time()))
-
-    demand_generator = Demand("normal", mean=10, sd=2, size=max_period)
-
-    bsp_48 = BaseStockPolicy(48)
-    bsp_43 = BaseStockPolicy(43)
-    bsp_41 = BaseStockPolicy(41)
-    bsp_30 = BaseStockPolicy(30)
-
-    if random_init:
-        init_inventory = [0, 21]
-        init_shipments = [[0, 21]] * 4
-        init_sales_orders = [[0, 21]] * 4
-    else:
-        init_inventory = 10
-        init_shipments = [[10, 10]] * 4
-        init_sales_orders = [[10, 10]] * 4
-
-    demand_source = Node(name="is_demand_source", is_demand_source=True, demands=demand_generator)
-    retailer = Node(
-        name="retailer", initial_inventory=init_inventory, holding_cost=1.0, backorder_cost=10, fallback_policy=bsp_48
-    )
-    wholesaler = Node(
-        name="wholesaler", initial_inventory=init_inventory, holding_cost=0.75, backorder_cost=0, fallback_policy=bsp_43
-    )
-    distributor = Node(
-        name="distributor", initial_inventory=init_inventory, holding_cost=0.5, backorder_cost=0, fallback_policy=bsp_41
-    )
-    manufacturer = Node(
-        name="manufacturer",
-        initial_inventory=init_inventory,
-        holding_cost=0.25,
-        backorder_cost=0,
-        fallback_policy=bsp_30,
-    )
-    supply_source = Node(name="is_external_supplier", is_external_supplier=True)
-    nodes = [demand_source, retailer, wholesaler, distributor, manufacturer, supply_source]
-
-    arcs = [
-        Arc(
-            "is_external_supplier",
-            "manufacturer",
-            1,
-            2,
-            initial_shipments=init_shipments[0],
-            initial_sales_orders=init_sales_orders[0],
-            random_init=random_init,
-        ),
-        Arc(
-            "manufacturer",
-            "distributor",
-            2,
-            2,
-            initial_shipments=init_shipments[1],
-            initial_sales_orders=init_sales_orders[1],
-            random_init=random_init,
-        ),
-        Arc(
-            "distributor",
-            "wholesaler",
-            2,
-            2,
-            initial_shipments=init_shipments[2],
-            initial_sales_orders=init_sales_orders[2],
-            random_init=random_init,
-        ),
-        Arc(
-            "wholesaler",
-            "retailer",
-            2,
-            2,
-            initial_shipments=init_shipments[3],
-            initial_sales_orders=init_sales_orders[3],
-            random_init=random_init,
-        ),
-        Arc("retailer", "is_demand_source", 0, 0),
-    ]
-
-    scn = SupplyNetwork(nodes=nodes, arcs=arcs, agent_managed_facilities=[player])
-
-    return InventoryManagementEnv(scn, max_episode_steps=max_period, return_dict=return_dict)
 
 
 def make_beer_game(
