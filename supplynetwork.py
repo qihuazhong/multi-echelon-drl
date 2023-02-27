@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 from collections import defaultdict
-from typing import List, Dict
+from typing import List, Dict, Tuple
 from network_components import Node, Arc
 from utils import graph
 from utils.demands import Demand
@@ -44,15 +44,16 @@ class SupplyNetwork:
         else:
             self.policies = {node_name: None for node_name in self.internal_nodes}
 
-        self.arcs: Dict[tuple, Arc] = {(arc.source, arc.target): arc for arc in arcs}
+        self.arcs: Dict[Tuple[str, str], Arc] = {(arc.source, arc.target): arc for arc in arcs}
         self.demand_sources: List[str] = [node.name for node in nodes if node.is_demand_source]
         # print(f'demand sources', self.demand_sources)
 
         # self.supply_sources = [node_name.name for node_name in nodes if node_name.is_external_supplier]
-        self.suppliers: Dict[str, list] = {
+        self.suppliers: Dict[str, List[str]] = {
             node.name: [arc.source for arc in arcs if arc.target == node.name] for node in nodes
         }
 
+        self.in_transit_holding_cost: bool = False  # whether the outgoing shipment accrue holding cost until received.
         self.current_cost = 0
 
     def __str__(self):
@@ -206,8 +207,8 @@ class SupplyNetwork:
                 arc = self.arcs[(supplier, node)]
                 # arc.advance_order_slips()
 
-                states = self.get_state(node)
-                self.nodes[node].place_order(states, arc)
+                states = self.get_state(node_name=node)
+                self.nodes[node].place_order(obs=states, arc=arc)
 
     def observations(self, agent: str):
         return self.get_state(agent)
@@ -235,7 +236,7 @@ class SupplyNetwork:
                 # arc.advance_order_slips()
 
                 states = self.get_state(node)
-                self.nodes[node].place_order(states, arc)
+                self.nodes[node].place_order(obs=states, arc=arc)
 
         # 3.advance shipments & 4.Fulfill orders
         for node in self.shipment_sequence:
@@ -292,7 +293,7 @@ class SupplyNetwork:
         c_h = 0  # inventory holding cost
         c_b = 0  # backorder cost
 
-        internal_nodes = [node for node_name, node in self.nodes.items() if not node.is_external_supplier]
+        internal_nodes: List[Node] = [node for node_name, node in self.nodes.items() if not node.is_external_supplier]
 
         for node in internal_nodes:
             # holding cost
