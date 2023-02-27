@@ -110,15 +110,15 @@ class InventoryManagementEnvMultiPlayer(gym.Env):
 
 
 def make_beer_game_normal_multi_facility(
-    global_observable=False,
+    global_observable: bool = False,
     agent_managed_facilities=None,
-    max_episode_steps=100,
-    return_dict=False,
-    random_init=False,
-    box_action_space=False,
+    max_episode_steps: int = 100,
+    return_dict: bool = False,
+    random_init: bool = False,
+    box_action_space: bool = False,
 ):
     if agent_managed_facilities is None:
-        agent_managed_facilities = ["retailer"]
+        agent_managed_facilities = ["retailer", "wholesaler", "distributor", "manufacturer"]
 
     if len(agent_managed_facilities) > 1 and not box_action_space:
         raise ValueError(
@@ -236,12 +236,12 @@ def make_beer_game_normal_multi_facility(
 
 
 def make_beer_game_uniform_multi_facility(
-    global_observable=False,
+    global_observable: bool = False,
     agent_managed_facilities=None,
-    max_episode_steps=100,
-    return_dict=False,
-    random_init=True,
-    box_action_space=False,
+    max_episode_steps: int = 100,
+    return_dict: bool = False,
+    random_init: bool = True,
+    box_action_space: bool = False,
 ):
     if agent_managed_facilities is None:
         agent_managed_facilities = ["retailer", "wholesaler", "distributor", "manufacturer"]
