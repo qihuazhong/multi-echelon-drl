@@ -19,7 +19,7 @@ class Demand:
         """
         self.demands_pattern = demand_pattern
         self._demands: np.ndarray = None
-        self.size = size + 3  # TODO
+
         self.low = low
         self.high = high
         self.mean = mean
@@ -28,10 +28,12 @@ class Demand:
             self.samples = pd.read_csv(data_path, header=None).values.reshape(-1)
             self.samples_length = self.samples.shape[0]
             self.sample_pointer = 0
+            self.size = self.samples_length
         else:
             self.samples = None
             self.samples_length = None
             self.sample_pointer = None
+            self.size = size + 3  # TODO
 
         self.reset()
 
@@ -52,6 +54,11 @@ class Demand:
         elif self.demands_pattern == "classic_beer_game":
             self._demands = np.array([4] * 4 + [8] * (self.size - 4))
 
+        elif self.demands_pattern == "negative_binomial":
+            n = 4298.87873
+            p = 0.0069131
+            self._demands = np.random.negative_binomial(n, p, size=104)
+
         elif self.demands_pattern == "samples":
             self._demands = self.samples
             self.sample_pointer = 0
@@ -62,7 +69,7 @@ class Demand:
     def generator(self):
         # Implemented as a generator, so that the argument 'period' is not needed
         period = 0
-        while period < self.size:
-            logging.info(f"Demand generated: {self._demands[period].item()}")
-            yield self._demands[period].item()
+        while period <= self.size:
+            logging.info(f"Demand generated: {self._demands[period % self.size].item()}")
+            yield self._demands[period % self.size].item()
             period += 1
