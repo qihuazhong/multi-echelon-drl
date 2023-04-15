@@ -38,7 +38,6 @@ class SupplyNetwork:
 
         self.agent_managed_facilities = agent_managed_facilities
         self.agent_indexes = [self.order_sequence.index(player) for player in self.agent_managed_facilities]
-        # self.agent_indexes = [self.order_sequence.index(player) for player in self.internal_nodes]
 
         if policies:
             self.policies = policies
@@ -311,10 +310,18 @@ class SupplyNetwork:
         for node in internal_nodes:
             # holding cost
             current_holding_cost = -node.current_inventory * node.unit_holding_cost
+            if self.in_transit_holding_cost:
+                current_holding_cost = (
+                    -sum(arc.shipments.en_route_subtotal for arc in self.get_outgoing_arcs(node.name))
+                    * node.unit_holding_cost
+                )
+
             # backorder cost
             current_backorder_cost = -node.unfilled_demand * node.unit_backorder_cost
 
-            # keep_cost_history
+            # keep_history
+            node.inventory_history.append(node.current_inventory)
+            node.backlog_history.append(node.unfilled_demand)
             node.holding_cost_history.append(current_holding_cost)
             node.backorder_cost_history.append(current_backorder_cost)
 

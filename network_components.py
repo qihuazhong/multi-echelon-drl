@@ -80,7 +80,7 @@ class ShipmentList(list):
         arrived_quantity = 0
         self.sort(key=lambda x: x.time_till_arrival, reverse=True)
         while (self.__len__() > 0) and (self[-1].time_till_arrival <= 0):
-            popped_shipment = self.pop()
+            popped_shipment: Shipment = self.pop()
             arrived_quantity += popped_shipment.quantity
 
         return arrived_quantity
@@ -130,6 +130,9 @@ class Arc:
         self.shipment_leadtime = shipment_leadtime
 
         self.shipments: ShipmentList = None  # Will be initialized in reset()
+        self.sales_orders = None
+        self.previous_orders = None
+        self.unreceived_quantities = None
         self.initial_shipments = initial_shipments
         self.initial_SOs = initial_sales_orders
 
@@ -168,7 +171,6 @@ class Arc:
         self.previous_orders = ([0] * 4 + shipments + sales_orders)[::-1][: self.HISTORY_LEN]
 
         self.unreceived_quantities = ([0] * 4 + shipments + sales_orders)[::-1][: self.HISTORY_LEN + 1]
-        # print(f'unreceived_quantities: {self.unreceived_quantities}')
 
     def keep_order_history(self, order_quantity):
         """Track order history for reporting state"""
@@ -308,6 +310,8 @@ class Node:
 
         self.latest_demand = []
 
+        self.inventory_history = []
+        self.backlog_history = []
         self.backorder_cost_history = []
         self.holding_cost_history = []
         self.order_history = []
