@@ -6,6 +6,7 @@ from typing import List, Dict, Tuple
 from network_components import Node, Arc
 from utils import graph
 from utils.demands import Demand
+from utils.heuristics import BaseStockPolicy
 
 
 class SupplyNetwork:
@@ -280,20 +281,20 @@ class SupplyNetwork:
             if node.is_demand_source:
                 node.update_demand()
 
-    def get_node_cost(self, node_name: str) -> float:
-        """
-        TODO: include setup costs
-        """
-
-        current_node: Node = self.nodes[node_name]
-
-        # inventory holding cost
-        c_h = -current_node.current_inventory * current_node.unit_holding_cost
-
-        # backorder cost
-        c_b = -current_node.unfilled_demand * current_node.unit_backorder_cost
-
-        return c_h + c_b
+    # def get_node_cost(self, node_name: str) -> float:
+    #     """
+    #     TODO: include setup costs
+    #     """
+    #
+    #     current_node: Node = self.nodes[node_name]
+    #
+    #     # inventory holding cost
+    #     c_h = -current_node.current_inventory * current_node.unit_holding_cost
+    #
+    #     # backorder cost
+    #     c_b = -current_node.unfilled_demand * current_node.unit_backorder_cost
+    #
+    #     return c_h + c_b
 
     def get_cost(self) -> float:
         """
@@ -378,15 +379,37 @@ def from_dict(network_config: dict) -> SupplyNetwork:
     # Create node_name instances according to the dictionary. Optional values are defaulted to 0 or False if not provided.
     node: dict
     for node in network_config["nodes"]:
-        if node.get("demand_path", None) is None:
+
+        demand: dict = node.get("demand", None)
+        if demand is None:
             is_demand_source = False
             demand_generator = None
         else:
             is_demand_source = True
-            demand_generator = Demand("samples", data_path=node["demand_path"])
+
+            if demand["distribution"] == "RN":
+                demand_generator = Demand(demand_pattern="normal", mean=demand["mean"], sd=demand["sd"])
+            else:
+                # TODO add other distributions
+                raise ValueError(f"demand distribution {demand['distribution']} not recognized")
 
         if node.get("agent_managed", False):
             agent_managed_facilities.append(node["name"])
+
+        target_stock_level = node.get("target_stock_level", None)
+        if target_stock_level is not None:
+            array_index = {
+                "on_hand": 0,
+                "unfilled_demand": 1,
+                "latest_demand": 2,
+                "unreceived_pipeline": [3, 4, 5, 6],
+            }
+
+            fallback_policy = BaseStockPolicy(
+                target_levels=[target_stock_level], array_index=array_index, state_dim_per_facility=7, ub=np.inf
+            )
+        else:
+            fallback_policy = None
 
         nodes.append(
             Node(
@@ -398,6 +421,7 @@ def from_dict(network_config: dict) -> SupplyNetwork:
                 holding_cost=node.get("holding_cost", 0),
                 backorder_cost=node.get("backorder_cost", 0),
                 setup_cost=node.get("setup_cost", 0),
+                fallback_policy=fallback_policy,
             )
         )
 
