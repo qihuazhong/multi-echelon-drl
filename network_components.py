@@ -267,7 +267,7 @@ class Node:
         is_external_supplier: bool = False,
         initial_inventory: Union[int, float, list] = 0.0,
         holding_cost: float = 0.5,
-        backorder_cost: float = 1.0,
+        backlog_cost: float = 1.0,
         setup_cost: float = 0.0,
     ):
 
@@ -280,10 +280,13 @@ class Node:
         self.is_external_supplier = is_external_supplier
 
         self.unit_holding_cost = holding_cost
-        self.unit_backorder_cost = backorder_cost
+        self.unit_backlog_cost = backlog_cost
         self.setup_cost = setup_cost
 
         self.initial_inventory = 9999999.0 if is_external_supplier else initial_inventory
+
+        self.current_inventory = None
+        self.unfilled_demand = None  # current backlog
 
         self.reset()
 
@@ -293,7 +296,6 @@ class Node:
     def __repr__(self):
         return self.__str__()
 
-    # noinspection PyAttributeOutsideInit
     def reset(self):
         if type(self.initial_inventory) in [int, float]:
             self.current_inventory = self.initial_inventory
@@ -305,14 +307,14 @@ class Node:
         self.unfilled_demand = 0
         self.unfilled_independent_demand = 0
 
-        self.current_backorder_cost = 0
+        self.current_backlog_cost = 0
         self.current_holding_cost = 0
 
         self.latest_demand = []
 
         self.inventory_history = []
         self.backlog_history = []
-        self.backorder_cost_history = []
+        self.backlog_cost_history = []
         self.holding_cost_history = []
         self.order_history = []
 

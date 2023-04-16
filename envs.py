@@ -116,6 +116,7 @@ def make_beer_game_normal_multi_facility(
     return_dict: bool = False,
     random_init: bool = False,
     box_action_space: bool = False,
+    cost_type="general",
 ):
     if agent_managed_facilities is None:
         agent_managed_facilities = ["retailer", "wholesaler", "distributor", "manufacturer"]
@@ -153,22 +154,22 @@ def make_beer_game_normal_multi_facility(
         name="retailer",
         initial_inventory=init_inventory,
         holding_cost=1.0,
-        backorder_cost=10,
+        backlog_cost=10,
         fallback_policy=bsp_48,
         is_demand_source=True,
         demands=demand_generator,
     )
     wholesaler = Node(
-        name="wholesaler", initial_inventory=init_inventory, holding_cost=0.75, backorder_cost=0, fallback_policy=bsp_43
+        name="wholesaler", initial_inventory=init_inventory, holding_cost=0.75, backlog_cost=0, fallback_policy=bsp_43
     )
     distributor = Node(
-        name="distributor", initial_inventory=init_inventory, holding_cost=0.5, backorder_cost=0, fallback_policy=bsp_41
+        name="distributor", initial_inventory=init_inventory, holding_cost=0.5, backlog_cost=0, fallback_policy=bsp_41
     )
     manufacturer = Node(
         name="manufacturer",
         initial_inventory=init_inventory,
         holding_cost=0.25,
-        backorder_cost=0,
+        backlog_cost=0,
         fallback_policy=bsp_30,
     )
     supply_source = Node(name="external_supplier", is_external_supplier=True)
@@ -214,7 +215,12 @@ def make_beer_game_normal_multi_facility(
     ]
 
     num_agent_managed_facilities = len(agent_managed_facilities)
-    sn = SupplyNetwork(nodes=nodes, arcs=arcs, agent_managed_facilities=agent_managed_facilities)
+    sn = SupplyNetwork(
+        nodes=nodes,
+        arcs=arcs,
+        agent_managed_facilities=agent_managed_facilities,
+        cost_type=cost_type,
+    )
     if box_action_space:
         action_space = gym.spaces.Box(0, 20, shape=(num_agent_managed_facilities,))
     else:
@@ -237,6 +243,7 @@ def make_beer_game_normal_multi_facility(
 
 def make_beer_game_uniform_multi_facility(
     global_observable: bool = False,
+    cost_type="general",
     agent_managed_facilities=None,
     max_episode_steps: int = 100,
     return_dict: bool = False,
@@ -272,22 +279,22 @@ def make_beer_game_uniform_multi_facility(
         name="retailer",
         initial_inventory=init_inventory,
         holding_cost=0.5,
-        backorder_cost=1,
+        backlog_cost=1,
         fallback_policy=bsp_19,
         is_demand_source=True,
         demands=demand_generator,
     )
     wholesaler = Node(
-        name="wholesaler", initial_inventory=init_inventory, holding_cost=0.5, backorder_cost=1, fallback_policy=bsp_20
+        name="wholesaler", initial_inventory=init_inventory, holding_cost=0.5, backlog_cost=1, fallback_policy=bsp_20
     )
     distributor = Node(
-        name="distributor", initial_inventory=init_inventory, holding_cost=0.5, backorder_cost=1, fallback_policy=bsp_20
+        name="distributor", initial_inventory=init_inventory, holding_cost=0.5, backlog_cost=1, fallback_policy=bsp_20
     )
     manufacturer = Node(
         name="manufacturer",
         initial_inventory=init_inventory,
         holding_cost=0.5,
-        backorder_cost=1,
+        backlog_cost=1,
         fallback_policy=bsp_14,
     )
     supply_source = Node(name="external_supplier", is_external_supplier=True)
@@ -333,7 +340,7 @@ def make_beer_game_uniform_multi_facility(
     ]
 
     num_agent_managed_facilities = len(agent_managed_facilities)
-    sn = SupplyNetwork(nodes=nodes, arcs=arcs, agent_managed_facilities=agent_managed_facilities)
+    sn = SupplyNetwork(nodes=nodes, arcs=arcs, agent_managed_facilities=agent_managed_facilities, cost_type=cost_type)
 
     if box_action_space:
         action_space = gym.spaces.Box(0, 16, shape=(num_agent_managed_facilities,))

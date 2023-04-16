@@ -21,7 +21,14 @@ class SupplyNetwork:
         current_cost : cost of the current period (reward signal)
     """
 
-    def __init__(self, nodes: List[Node], arcs: List[Arc], agent_managed_facilities: List[str], policies=None):
+    def __init__(
+        self,
+        nodes: List[Node],
+        arcs: List[Arc],
+        agent_managed_facilities: List[str],
+        policies=None,
+        cost_type: str = "general",
+    ):
 
         self.nodes: Dict[str, Node] = {node.name: node for node in nodes}
         self.customers_dict = defaultdict(list)
@@ -54,7 +61,8 @@ class SupplyNetwork:
             node.name: [arc.source for arc in arcs if arc.target == node.name] for node in nodes
         }
 
-        self.in_transit_holding_cost: bool = False  # whether the outgoing shipment accrue holding cost until received.
+        self.cost_type: str = cost_type  # "general", "clark-scarf" or "fixed-cost"
+        # self.in_transit_holding_cost: bool = False  # whether the outgoing shipment accrue holding cost until received.
         self.current_cost = 0
 
     def __str__(self):
@@ -77,6 +85,10 @@ class SupplyNetwork:
     @lru_cache
     def get_outgoing_arcs(self, node_name: str) -> List[Arc]:
         return [arc for (source, target), arc in self.arcs.items() if source == node_name]
+
+    @lru_cache
+    def get_incoming_arcs(self, node_name: str) -> List[Arc]:
+        return [arc for (source, target), arc in self.arcs.items() if target == node_name]
 
     def summary(self):
         print(
@@ -291,10 +303,69 @@ class SupplyNetwork:
     #     # inventory holding cost
     #     c_h = -current_node.current_inventory * current_node.unit_holding_cost
     #
-    #     # backorder cost
-    #     c_b = -current_node.unfilled_demand * current_node.unit_backorder_cost
+    #     # backlog cost
+    #     c_b = -current_node.unfilled_demand * current_node.unit_backlog_cost
     #
     #     return c_h + c_b
+
+    def get_clack_scarf_cost(self):
+
+        c_h = 0  # inventory holding cost
+        c_b = 0  # backlog cost
+
+        internal_nodes: List[Node] = [node for node_name, node in self.nodes.items() if not node.is_external_supplier]
+
+        for node in internal_nodes:
+            # holding cost
+
+            # Inventory cost can be negative in Clark-Scarf's cost structure
+            cost_bearing_inventory = node.current_inventory - node.unfilled_demand
+            cost_bearing_inventory += sum(arc.shipments.en_route_subtotal for arc in self.get_incoming_arcs(node.name))
+            current_holding_cost = -cost_bearing_inventory * node.unit_holding_cost
+
+            # backlog cost
+            current_backlog_cost = -node.unfilled_demand * node.unit_backlog_cost
+
+            # keep_history
+            node.inventory_history.append(node.current_inventory)
+            node.backlog_history.append(node.unfilled_demand)
+            node.holding_cost_history.append(current_holding_cost)
+            node.backlog_cost_history.append(current_backlog_cost)
+
+            c_h += current_holding_cost
+            c_b += current_backlog_cost
+
+        return c_h + c_b
+
+    def get_general_cost(self) -> float:
+        """
+        Returns:
+            The cost (usually a negative real number) of the current period, used as the reward signal
+
+        TODO: include setup costs
+        """
+        c_h = 0  # inventory holding cost
+        c_b = 0  # backlog cost
+
+        internal_nodes: List[Node] = [node for node_name, node in self.nodes.items() if not node.is_external_supplier]
+
+        for node in internal_nodes:
+            # holding cost
+            current_holding_cost = -node.current_inventory * node.unit_holding_cost
+
+            # backlog cost
+            current_backlog_cost = -node.unfilled_demand * node.unit_backlog_cost
+
+            # keep_history
+            node.inventory_history.append(node.current_inventory)
+            node.backlog_history.append(node.unfilled_demand)
+            node.holding_cost_history.append(current_holding_cost)
+            node.backlog_cost_history.append(current_backlog_cost)
+
+            c_h += current_holding_cost
+            c_b += current_backlog_cost
+
+        return c_h + c_b
 
     def get_cost(self) -> float:
         """
@@ -303,33 +374,15 @@ class SupplyNetwork:
 
         TODO: include setup costs
         """
-        c_h = 0  # inventory holding cost
-        c_b = 0  # backorder cost
 
-        internal_nodes: List[Node] = [node for node_name, node in self.nodes.items() if not node.is_external_supplier]
+        if self.cost_type == "general":
+            return self.get_general_cost()
 
-        for node in internal_nodes:
-            # holding cost
-            current_holding_cost = -node.current_inventory * node.unit_holding_cost
-            if self.in_transit_holding_cost:
-                current_holding_cost = (
-                    -sum(arc.shipments.en_route_subtotal for arc in self.get_outgoing_arcs(node.name))
-                    * node.unit_holding_cost
-                )
+        elif self.cost_type == "clark_scarf":
+            return self.get_clack_scarf_cost()
 
-            # backorder cost
-            current_backorder_cost = -node.unfilled_demand * node.unit_backorder_cost
-
-            # keep_history
-            node.inventory_history.append(node.current_inventory)
-            node.backlog_history.append(node.unfilled_demand)
-            node.holding_cost_history.append(current_holding_cost)
-            node.backorder_cost_history.append(current_backorder_cost)
-
-            c_h += current_holding_cost
-            c_b += current_backorder_cost
-
-        return c_h + c_b
+        else:
+            raise ValueError(f"Cost type {self.cost_type} not recognised")
 
     # TODO: move this function to an analysis module/script
     def get_cost_history(self, nodes=None, as_df=False):
@@ -349,7 +402,7 @@ class SupplyNetwork:
         cost_dict = {
             node: {
                 "holding_cost": self.nodes[node].holding_cost_history,
-                "backorder_cost": self.nodes[node].backorder_cost_history,
+                "backlog_cost": self.nodes[node].backlog_cost_history,
             }
             for node in nodes
         }
@@ -419,7 +472,7 @@ def from_dict(network_config: dict) -> SupplyNetwork:
                 is_external_supplier=node.get("is_external_supplier", False),
                 initial_inventory=node.get("initial_inventory", 0),
                 holding_cost=node.get("holding_cost", 0),
-                backorder_cost=node.get("backorder_cost", 0),
+                backlog_cost=node.get("backlog_cost", 0),
                 setup_cost=node.get("setup_cost", 0),
                 fallback_policy=fallback_policy,
             )
@@ -438,5 +491,7 @@ def from_dict(network_config: dict) -> SupplyNetwork:
             )
         )
 
-    sn = SupplyNetwork(nodes=nodes, arcs=arcs, agent_managed_facilities=agent_managed_facilities)
+    sn = SupplyNetwork(
+        nodes=nodes, arcs=arcs, agent_managed_facilities=agent_managed_facilities, cost_type=network_config["cost_type"]
+    )
     return sn
