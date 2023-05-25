@@ -200,11 +200,7 @@ class Arc:
         arrived_quantity = self.shipments.receive_shipments()
         return arrived_quantity
 
-    def receive_shipments(self):
-        arrived_quantity = self.shipments.receive_shipments()
-        return arrived_quantity
-
-    def fill_orders(self, node) -> float:
+    def fill_orders(self, node: "Node") -> float:
         """Fulfills (ships) outstanding sales orders.
 
         Args:
