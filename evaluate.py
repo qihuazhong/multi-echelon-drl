@@ -24,6 +24,14 @@ def main():
     parser = argparse.ArgumentParser()
 
     parser.add_argument("-a", "--algo", help="DRL algorithm of the agent. One of [td3, a2c, dqn]", required=True)
+
+    parser.add_argument(
+        "--cost-type",
+        type=str,
+        required=True,
+        help="Should be one of 'general', 'clark-scarf'",
+    )
+
     parser.add_argument("-m", "--models-dir", help="Path to directory the saved model(s)", required=True)
     parser.add_argument(
         "-n", "--n-eval-episodes", help="Number of episodes to evaluate per model", required=True, default=100, type=int
@@ -44,6 +52,8 @@ def main():
         choices=ROLES,
     )
     parser.add_argument("--scenario", type=str, required=True, help="complex or basic")
+    parser.add_argument("--hge", type=str, default="nohge", help="Whether heuristic guided exploration is used")
+
     # Read arguments from command line
     args = parser.parse_args()
 
@@ -60,10 +70,9 @@ def main():
 
     # If td3, make the continuous environment, otherwise make the discrete environment
     if args.algo == "td3":
-        env_name = f"BeerGame{demand_type}{args.role}{'FullInfo' * (args.info_scope=='global')}-v0"
+        env_name = f"BeerGame{'CSCost'*(args.cost_type=='clark-scarf')}{demand_type}{args.role}{'FullInfo' * (args.info_scope=='global')}-v0"
     else:
-        env_name = f"BeerGame{demand_type}{args.role}{'FullInfo' * (args.info_scope=='global')}Discrete-v0"
-    print("Env id: ", env_name)
+        env_name = f"BeerGame{'CSCost'*(args.cost_type=='clark-scarf')}{demand_type}{args.role}{'FullInfo' * (args.info_scope=='global')}Discrete-v0"
 
     def env_factory() -> gym.Env:
         if args.ordering_rule == "d+a":
@@ -80,8 +89,9 @@ def main():
 
     algos: Dict[str, Type[BaseAlgorithm]] = {"td3": TD3, "a2c": A2C, "dqn": DQN}
     sub_dirs: List[str] = next(os.walk(args.models_dir + "/best_models/"))[1]
-    experiment_prefix: str = f"_{args.algo.upper()}_{args.role}_{args.scenario}{'_FullInfo'*(args.info_scope=='global')}_{args.ordering_rule}"
-
+    experiment_prefix: str = f"_{args.algo.upper()}_{args.role}_{args.scenario}{'_CSCost'*(args.cost_type=='clark-scarf')}{'_FullInfo'*(args.info_scope=='global')}{'_hge'*(args.hge=='hge')}_{args.ordering_rule}"
+    print("Env id: ", env_name)
+    print("Experiment_prefix", experiment_prefix)
     results: List[Result] = []
     mean_rewards = []
     for sub_dir in sub_dirs:
@@ -126,7 +136,11 @@ def main():
     )
 
     df = pd.DataFrame(results)
-    df.to_csv(f"./df_{args.algo}.csv", index=False, mode="a")
+    df.to_csv(
+        f"./df_{args.algo}{args.role}{'_hge'*(args.hge=='hge')}.csv",
+        index=False,
+        mode="a",
+    )
 
 
 if __name__ == "__main__":
