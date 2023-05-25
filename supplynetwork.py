@@ -264,49 +264,39 @@ class SupplyNetwork:
                 self.nodes[node].place_order(obs=states, arc=arc)
 
         # 3.advance shipments & 4.Fulfill orders
-        for node in self.shipment_sequence:
-            for customer in self.customers_dict[node]:
+        for node_name in self.shipment_sequence:
+            for customer in self.customers_dict[node_name]:
                 # Increase customer's inventory when the shipments arrive
-                arc = self.arcs[(node, customer)]
-                arrived_quantity = arc.advance_and_receive_shipments()
-                self.nodes[customer].current_inventory += arrived_quantity
+                arc = self.arcs[(node_name, customer)]
 
-                # print(f'arrived_quantity {arrived_quantity}')
-                # print(f'before consumption {arc.unreceived_quantities}')
+                self.nodes[customer].last_received = arc.advance_and_receive_shipments()
+                # arrived_quantity = arc.advance_and_receive_shipments()
+
+                self.nodes[customer].current_inventory += self.nodes[customer].last_received
+
                 consumed = 0
                 for i in range(len(arc.unreceived_quantities) - 1, -1, -1):
-                    if arrived_quantity - consumed > 0:
-                        filled_qty = min(arc.unreceived_quantities[i], arrived_quantity - consumed)
+                    if self.nodes[customer].last_received - consumed > 0:
+                        filled_qty = min(arc.unreceived_quantities[i], self.nodes[customer].last_received - consumed)
                         arc.unreceived_quantities[i] -= filled_qty
                         consumed += filled_qty
-                # print(f'after consumption {arc.unreceived_quantities}')
 
-            self.nodes[node].update_last_backlog()
+            self.nodes[node_name].update_last_backlog()
 
-            self.nodes[node].unfilled_demand = 0
-            for customer in self.customers_dict[node]:
-                self.nodes[node].unfilled_demand += self.arcs[(node, customer)].fill_orders(self.nodes[node])
-            if self.nodes[node].is_demand_source:
-                self.nodes[node].unfilled_demand += self.nodes[node].fill_independent_demand()
+            self.nodes[node_name].unfilled_demand = 0
+            for customer in self.customers_dict[node_name]:
+                filled, unfilled = self.arcs[(node_name, customer)].fill_orders(self.nodes[node_name])
+                self.nodes[node_name].unfilled_demand += unfilled
+
+            if self.nodes[node_name].is_demand_source:
+                self.nodes[node_name].unfilled_demand += self.nodes[node_name].fill_independent_demand()
+
+        for node in self.order_sequence:
+            self.get_clack_scarf_cost_by_node_name(query_node_name=node)
 
         for node_name, node in self.nodes.items():
             if node.is_demand_source:
                 node.update_demand()
-
-    # def get_node_cost(self, node_name: str) -> float:
-    #     """
-    #     TODO: include setup costs
-    #     """
-    #
-    #     current_node: Node = self.nodes[node_name]
-    #
-    #     # inventory holding cost
-    #     c_h = -current_node.current_inventory * current_node.unit_holding_cost
-    #
-    #     # backlog cost
-    #     c_b = -current_node.unfilled_demand * current_node.unit_backlog_cost
-    #
-    #     return c_h + c_b
 
     def get_clack_scarf_cost(self):
 
@@ -314,26 +304,147 @@ class SupplyNetwork:
         c_b = 0  # backlog cost
 
         internal_nodes: List[Node] = [node for node_name, node in self.nodes.items() if not node.is_external_supplier]
+        echelon_stock = 0
 
-        for node in internal_nodes:
-            # holding cost
+        for node_name in self.order_sequence:
 
-            # Inventory cost can be negative in Clark-Scarf's cost structure
-            cost_bearing_inventory = node.current_inventory - node.unfilled_demand
-            cost_bearing_inventory += sum(arc.shipments.en_route_subtotal for arc in self.get_incoming_arcs(node.name))
-            current_holding_cost = -cost_bearing_inventory * node.unit_holding_cost
+            node = self.nodes[node_name]
+            if node.is_external_supplier:
+                continue
 
-            # backlog cost
-            current_backlog_cost = -node.unfilled_demand * node.unit_backlog_cost
+            current_backlog_cost = 0
 
-            # keep_history
-            node.inventory_history.append(node.current_inventory)
+            if node.is_demand_source:
+                # backlog cost
+                current_backlog_cost = -node.unfilled_demand * node.unit_backlog_cost
+
+                # echelon stock
+                echelon_stock += node.current_inventory
+                current_holding_cost = -echelon_stock * 0.25
+
+                c_b += current_backlog_cost
+                c_h += current_holding_cost
+
+            else:
+                # echelon stock
+                echelon_stock += (
+                    node.current_inventory
+                    - node.unfilled_demand
+                    + sum(sum(arc.unreceived_quantities) for arc in self.get_incoming_arcs(node.name))
+                )
+
+                current_holding_cost = -echelon_stock * 0.25
+
+                c_b += current_backlog_cost
+                c_h += current_holding_cost
+
             node.backlog_history.append(node.unfilled_demand)
-            node.holding_cost_history.append(current_holding_cost)
             node.backlog_cost_history.append(current_backlog_cost)
 
-            c_h += current_holding_cost
-            c_b += current_backlog_cost
+            node.inventory_history.append(echelon_stock)
+            node.holding_cost_history.append(current_holding_cost)
+
+        return c_h + c_b
+
+    def get_clack_scarf_backlog_cost_by_node_name(self, query_node_name: str):
+
+        # c_h = 0  # inventory holding cost
+        c_b = 0  # backlog cost
+
+        # echelon_stock = 0
+        node = self.nodes[query_node_name]
+
+        if node.is_demand_source:
+            c_b = -node.unfilled_demand * node.unit_backlog_cost
+            # c_h = -echelon_stock * 0.25
+        else:
+            c_b = 0
+            # c_h = -echelon_stock * 0.25
+
+        node.backlog_history.append(node.unfilled_demand)
+        node.backlog_cost_history.append(c_b)
+
+        # node.inventory_history.append(echelon_stock)
+        # node.holding_cost_history.append(c_h)
+
+        return c_b
+
+    def get_clack_scarf_holding_cost_by_node_name(self, query_node_name: str):
+
+        c_h = 0  # inventory holding cost
+        # c_b = 0  # backlog cost
+
+        echelon_stock = 0
+        node = self.nodes[query_node_name]
+        if node.is_demand_source:
+            echelon_stock += max(0, node.current_inventory)
+            node.echelon_stock = echelon_stock
+        else:
+            echelon_stock += (
+                node.current_inventory
+                - node.unfilled_demand
+                + sum(sum(arc.unreceived_quantities) for arc in self.get_incoming_arcs(node.name))
+            )
+
+            echelon_stock += sum(
+                [self.nodes[customer].echelon_stock for customer in self.customers_dict[query_node_name]]
+            )
+            node.echelon_stock = echelon_stock
+
+        if node.is_demand_source:
+            # c_b = -node.unfilled_demand * node.unit_backlog_cost
+            c_h = -echelon_stock * 0.25
+        else:
+            # c_b = 0
+            c_h = -echelon_stock * 0.25
+
+        # node.backlog_history.append(node.unfilled_demand)
+        # node.backlog_cost_history.append(c_b)
+
+        node.inventory_history.append(echelon_stock)
+        node.holding_cost_history.append(c_h)
+
+        return c_h  # + c_b
+
+    def get_clack_scarf_cost_by_node_name(self, query_node_name: str):
+
+        c_h = 0  # inventory holding cost
+        c_b = 0  # backlog cost
+
+        echelon_stock = 0
+        node = self.nodes[query_node_name]
+        if node.is_demand_source:
+            echelon_stock += max(0, node.current_inventory)
+            node.echelon_stock = echelon_stock
+
+        else:
+            echelon_stock += (
+                node.current_inventory
+                - node.unfilled_demand
+                + sum(sum(arc.unreceived_quantities) for arc in self.get_outgoing_arcs(node.name))
+            )
+
+            echelon_stock += sum(
+                [self.nodes[customer].echelon_stock for customer in self.customers_dict[query_node_name]]
+            )
+            node.echelon_stock = echelon_stock
+
+        if node.is_demand_source:
+            c_b = -node.unfilled_demand * node.unit_backlog_cost
+            c_h = -echelon_stock * 0.25
+
+            node.inventory_history.append(echelon_stock)
+            node.holding_cost_history.append(c_h)
+
+        else:
+            c_b = 0
+            c_h = (-echelon_stock) * 0.25
+
+            node.inventory_history.append(echelon_stock)
+            node.holding_cost_history.append(c_h)
+
+        node.backlog_history.append(node.unfilled_demand)
+        node.backlog_cost_history.append(c_b)
 
         return c_h + c_b
 
@@ -379,7 +490,12 @@ class SupplyNetwork:
             return self.get_general_cost()
 
         elif self.cost_type == "clark_scarf":
-            return self.get_clack_scarf_cost()
+            return sum(
+                [
+                    self.nodes[node_name].holding_cost_history[-1] + self.nodes[node_name].backlog_cost_history[-1]
+                    for node_name in self.internal_nodes
+                ]
+            )
 
         else:
             raise ValueError(f"Cost type {self.cost_type} not recognised")
@@ -440,8 +556,10 @@ def from_dict(network_config: dict) -> SupplyNetwork:
         else:
             is_demand_source = True
 
-            if demand["distribution"] == "RN":
+            if demand["distribution"] == "Normal":
                 demand_generator = Demand(demand_pattern="normal", mean=demand["mean"], sd=demand["sd"])
+            elif demand["distribution"] == "Custom":
+                demand_generator = Demand("samples", data_path=demand["path"])
             else:
                 # TODO add other distributions
                 raise ValueError(f"demand distribution {demand['distribution']} not recognized")
