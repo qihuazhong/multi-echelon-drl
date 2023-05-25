@@ -20,6 +20,13 @@ def main():
 
     # Adding required argument
     parser.add_argument(
+        "--cost-type",
+        type=str,
+        required=True,
+        help="Should be one of 'general', 'clark-scarf'",
+    )
+
+    parser.add_argument(
         "-i",
         "--info-scope",
         type=str,
@@ -67,7 +74,7 @@ def main():
     if params["hge_rate_at_start"] > 0 and args.role != "MultiFacility":
         raise NotImplementedError("For now the TD3 with HGE only supports centralized setting")
 
-    env_name = f"BeerGame{demand_type}{args.role}{'FullInfo'*(args.info_scope=='global')}-v0"
+    env_name = f"BeerGame{'CSCost' * (args.cost_type == 'clark-scarf')}{demand_type}{args.role}{'FullInfo' * (args.info_scope == 'global')}-v0"
 
     bsp = BaseStockPolicy(
         target_levels=benchmark_target_stock_level,
@@ -96,8 +103,7 @@ def main():
             raise ValueError
 
     for run in range(setup["runs"]):
-
-        exp_name = f"{args.name}_TD3_{args.role}_{args.scenario}{'_FullInfo'*(args.info_scope=='global')}{'_hge'*(params['hge_rate_at_start']>0)}_{args.ordering_rule}_{run}_{time.time_ns()}"
+        exp_name = f"{args.name}_TD3_{args.role}_{args.scenario}{'_CSCost'*(args.cost_type=='clark-scarf')}{'_FullInfo'*(args.info_scope=='global')}{'_hge'*(params['hge_rate_at_start']>0)}_{args.ordering_rule}_{run}_{time.time_ns()}"
         env = VecNormalize(make_vec_env(env_factory, n_env, vec_env_cls=SubprocVecEnv), clip_obs=100, clip_reward=1000)
         # eval_env = VecNormalize(make_vec_env(env_factory, n_env), clip_obs=100, clip_reward=1000)
 
