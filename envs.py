@@ -49,7 +49,7 @@ class InventoryManagementEnvMultiPlayer(gym.Env):
 
         self.seed()
 
-    def reset(self) -> np.ndarray | dict:
+    def reset(self) -> Union[np.ndarray, dict]:
         self.terminal = False
         self.sn.reset()
         self.period = 0
@@ -117,6 +117,9 @@ def make_beer_game_normal_multi_facility(
     random_init: bool = False,
     box_action_space: bool = False,
     cost_type="general",
+    info_leadtime=None,
+    shipment_leadtime=None,
+    target_levels=None,
 ):
     if agent_managed_facilities is None:
         agent_managed_facilities = ["retailer", "wholesaler", "distributor", "manufacturer"]
@@ -127,6 +130,20 @@ def make_beer_game_normal_multi_facility(
             "box_action_space=True"
         )
 
+    if info_leadtime is None:
+        info_leadtime = [2, 2, 2, 1]
+    if shipment_leadtime is None:
+        shipment_leadtime = [2, 2, 2, 2]
+
+    if target_levels is None:
+        # target_levels = [
+        #     48.19707759605117,
+        #     42.262221839366944,
+        #     41.533562842136476,
+        #     30.11790521885922,
+        # ]
+        target_levels = [48, 43, 41, 30]
+
     demand_generator = Demand("normal", mean=10, sd=2, size=max_episode_steps)
 
     array_index = {
@@ -136,10 +153,10 @@ def make_beer_game_normal_multi_facility(
         "unreceived_pipeline": [3, 4, 5, 6],
     }
 
-    bsp_48 = BaseStockPolicy(target_levels=[48], array_index=array_index, state_dim_per_facility=7)
-    bsp_43 = BaseStockPolicy(target_levels=[43], array_index=array_index, state_dim_per_facility=7)
-    bsp_41 = BaseStockPolicy(target_levels=[41], array_index=array_index, state_dim_per_facility=7)
-    bsp_30 = BaseStockPolicy(target_levels=[30], array_index=array_index, state_dim_per_facility=7)
+    bsp_48 = BaseStockPolicy(target_levels=[target_levels[0]], array_index=array_index, state_dim_per_facility=7)
+    bsp_43 = BaseStockPolicy(target_levels=[target_levels[1]], array_index=array_index, state_dim_per_facility=7)
+    bsp_41 = BaseStockPolicy(target_levels=[target_levels[2]], array_index=array_index, state_dim_per_facility=7)
+    bsp_30 = BaseStockPolicy(target_levels=[target_levels[3]], array_index=array_index, state_dim_per_facility=7)
 
     if random_init:
         init_inventory = [0, 21]
@@ -179,8 +196,8 @@ def make_beer_game_normal_multi_facility(
         Arc(
             "external_supplier",
             "manufacturer",
-            1,
-            2,
+            info_leadtime[3],
+            shipment_leadtime[3],
             initial_shipments=init_shipments[0],
             initial_sales_orders=init_sales_orders[0],
             random_init=random_init,
@@ -188,8 +205,8 @@ def make_beer_game_normal_multi_facility(
         Arc(
             "manufacturer",
             "distributor",
-            2,
-            2,
+            info_leadtime[2],
+            shipment_leadtime[2],
             initial_shipments=init_shipments[1],
             initial_sales_orders=init_sales_orders[1],
             random_init=random_init,
@@ -197,8 +214,8 @@ def make_beer_game_normal_multi_facility(
         Arc(
             "distributor",
             "wholesaler",
-            2,
-            2,
+            info_leadtime[1],
+            shipment_leadtime[1],
             initial_shipments=init_shipments[2],
             initial_sales_orders=init_sales_orders[2],
             random_init=random_init,
@@ -206,8 +223,8 @@ def make_beer_game_normal_multi_facility(
         Arc(
             "wholesaler",
             "retailer",
-            2,
-            2,
+            info_leadtime[0],
+            shipment_leadtime[0],
             initial_shipments=init_shipments[3],
             initial_sales_orders=init_sales_orders[3],
             random_init=random_init,
