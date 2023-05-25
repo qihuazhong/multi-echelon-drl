@@ -210,6 +210,7 @@ class Arc:
             Outstanding quantity that is not fulfilled due to insufficient inventory
 
         """
+        filled_quantity = 0
         unfilled_quantity = 0
 
         for so in self.sales_orders:
@@ -217,6 +218,9 @@ class Arc:
 
                 # quantity of the new shipment should be minimum between available inventory and unshipped quantity
                 quantity = min(node.current_inventory, so.unshipped_quantity)
+
+                # if node.name == "external_supplier":
+                #     print(f"Shipped {quantity}, leadtime {self.shipment_leadtime}")
                 if quantity > 0:
                     self.shipments.append(Shipment(quantity, self.shipment_leadtime))
                     so.shipped_quantity += quantity
@@ -227,11 +231,12 @@ class Arc:
                     node.current_inventory -= quantity
 
                 unfilled_quantity += so.unshipped_quantity
+                filled_quantity += quantity
 
         # clean up finished orders
         self.sales_orders.clean_finished_orders()
 
-        return unfilled_quantity
+        return filled_quantity, unfilled_quantity
 
     def __str__(self):
         return "arc(source:{}, target:{}, information leadtime:{}, shipment leadtime:{})".format(
@@ -281,6 +286,11 @@ class Node:
 
         self.initial_inventory = 9999999.0 if is_external_supplier else initial_inventory
 
+        self.inventory_history = None
+        self.backlog_history = None
+
+        self.last_received = None
+
         self.current_inventory = None
         self.unfilled_demand = None  # current backlog
 
@@ -313,6 +323,8 @@ class Node:
         self.backlog_cost_history = []
         self.holding_cost_history = []
         self.order_history = []
+
+        self.last_received = 0
 
         self.last_backlog = 0
 
@@ -387,8 +399,8 @@ class Node:
                 raise TypeError(f"observation type {type(obs)} not supported")
 
         if order_quantity < 0:
-            warnings.warn(
-                # action="always",
+            warnings.filterwarnings(
+                action="module",
                 message=f"{self.name} order quantity is {order_quantity} but it should be non-negative. "
                 f"Quantity will be truncated to 0",
                 category=RuntimeWarning,
