@@ -233,6 +233,18 @@ def register_envs():
             entry_point=normal_env_factory(
                 role=role,
                 discrete=False,
+                global_observable=False,
+                cost_type="clark_scarf",
+                info_leadtime=[0, 0, 0, 0],
+                shipment_leadtime=[4, 4, 4, 3],
+            ),
+            max_episode_steps=100,
+        )
+        gym.envs.register(
+            id=f"BeerGameCSCostNormal{key}FullInfo-v0",
+            entry_point=normal_env_factory(
+                role=role,
+                discrete=False,
                 global_observable=True,
                 cost_type="clark_scarf",
                 info_leadtime=[0, 0, 0, 0],
