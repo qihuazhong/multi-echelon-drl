@@ -114,7 +114,11 @@ def register_envs():
     gym.envs.register(
         id="BeerGameNormalMultiFacilityFullInfo-v0",
         entry_point=normal_env_factory(
-            role=["retailer", "wholesaler", "distributor", "manufacturer"], discrete=False, global_observable=True
+            role=["retailer", "wholesaler", "distributor", "manufacturer"],
+            discrete=False,
+            global_observable=True,
+            info_leadtime=[2, 2, 2, 1],
+            shipment_leadtime=[2, 2, 2, 2],
         ),
         max_episode_steps=100,
     )
