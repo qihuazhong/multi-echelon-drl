@@ -51,8 +51,7 @@ def wrap_action_a(env, offset=-8, lb: int = 0, ub: int = 16):
     def wrapped_step(self, action):
         states = [self.sn.get_state(facility) for facility in self.sn.agent_managed_facilities]
         # modified_action = np.array([state['latest_demand'] for state in states]) + action + offset
-        modified_action = np.array([action])
-
+        modified_action = np.array(action).reshape(-1)
         return self.wrappee_step(np.clip(modified_action, lb, ub))
 
     env.step = types.MethodType(wrapped_step, env)
