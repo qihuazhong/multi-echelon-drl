@@ -1,6 +1,6 @@
 import argparse
 import yaml
-from utils.wrappers import wrap_action_d_plus_a
+from utils.wrappers import wrap_action_d_plus_a, wrap_action_a
 from register_envs import register_envs
 from utils.callbacks import SaveEnvStatsCallback, HParamCallback
 from utils.utils import ROLES
@@ -84,7 +84,13 @@ def main():
                 ub=action_range[1],
             )
         elif args.ordering_rule == "a":
-            return gym.make(env_name)
+            # return gym.make(env_name)
+            return wrap_action_a(
+                gym.make(env_name),
+                offset=-(action_range[1] - action_range[0]) / 2,
+                lb=action_range[0],
+                ub=action_range[1],
+            )
         else:
             raise ValueError
 
