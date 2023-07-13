@@ -193,9 +193,9 @@ class SupplyNetwork:
         }
 
         arc = upstream_arcs[0]
-        unreceived_quantity_pipeline[0] = {arc.shipments.shipment_quantity_by_time[0]}
-        unreceived_quantity_pipeline[1] = {arc.shipments.shipment_quantity_by_time[1]}
-        unreceived_quantity_pipeline[3] = sum(arc.unreceived_quantities[i] for i in range(M))
+        unreceived_quantity_pipeline[f"unreceived_pipeline_{0}"] = {arc.shipments.shipment_quantity_by_time[0]}
+        unreceived_quantity_pipeline[f"unreceived_pipeline_{1}"] = {arc.shipments.shipment_quantity_by_time[1]}
+        unreceived_quantity_pipeline[f"unreceived_pipeline_{3}"] = sum(arc.unreceived_quantities[i] for i in range(M))
 
         states_dict = {**states_dict, **unreceived_quantity_pipeline}
 
