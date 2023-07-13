@@ -192,6 +192,11 @@ class SupplyNetwork:
             f"unreceived_pipeline_{i}": arc.unreceived_quantities[i] for arc in upstream_arcs for i in range(M)
         }
 
+        arc = upstream_arcs[0]
+        unreceived_quantity_pipeline[0] = {arc.shipments.shipment_quantity_by_time[0]}
+        unreceived_quantity_pipeline[1] = {arc.shipments.shipment_quantity_by_time[1]}
+        unreceived_quantity_pipeline[3] = sum(arc.unreceived_quantities[i] for i in range(M))
+
         states_dict = {**states_dict, **unreceived_quantity_pipeline}
 
         return states_dict
@@ -291,8 +296,8 @@ class SupplyNetwork:
             if self.nodes[node_name].is_demand_source:
                 self.nodes[node_name].unfilled_demand += self.nodes[node_name].fill_independent_demand()
 
-        for node in self.order_sequence:
-            self.get_clack_scarf_cost_by_node_name(query_node_name=node)
+        # for node in self.order_sequence:
+        #     self.get_clack_scarf_cost_by_node_name(query_node_name=node)
 
         for node_name, node in self.nodes.items():
             if node.is_demand_source:
