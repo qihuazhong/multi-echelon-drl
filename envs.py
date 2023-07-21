@@ -117,6 +117,7 @@ def make_beer_game_normal_multi_facility(
     random_init: bool = False,
     box_action_space: bool = False,
     cost_type="general",
+    state_version="v0",
     info_leadtime=None,
     shipment_leadtime=None,
     target_levels=None,
@@ -237,6 +238,7 @@ def make_beer_game_normal_multi_facility(
         arcs=arcs,
         agent_managed_facilities=agent_managed_facilities,
         cost_type=cost_type,
+        state_version=state_version,
     )
     if box_action_space:
         action_space = gym.spaces.Box(0, 20, shape=(num_agent_managed_facilities,))
