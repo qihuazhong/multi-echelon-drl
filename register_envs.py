@@ -53,6 +53,7 @@ def normal_env_factory(
     info_leadtime: List[int],
     shipment_leadtime: List[int],
     cost_type="general",
+    state_version="v0",
 ):
     def func():
         env = make_beer_game_normal_multi_facility(
@@ -61,6 +62,7 @@ def normal_env_factory(
             random_init=True,
             global_observable=global_observable,
             cost_type=cost_type,
+            state_version=state_version,
             info_leadtime=info_leadtime,
             shipment_leadtime=shipment_leadtime,
         )
@@ -191,6 +193,19 @@ def register_envs():
         )
 
         gym.envs.register(
+            id=f"BeerGameNormal{key}FullInfo-v1",
+            entry_point=normal_env_factory(
+                role=role,
+                discrete=False,
+                global_observable=True,
+                state_version="v1",
+                info_leadtime=[2, 2, 2, 1],
+                shipment_leadtime=[2, 2, 2, 2],
+            ),
+            max_episode_steps=100,
+        )
+
+        gym.envs.register(
             id=f"BeerGameNormal{key}FullInfoDiscrete-v0",
             entry_point=normal_env_factory(
                 role=role,
@@ -245,9 +260,9 @@ def register_envs():
             entry_point=normal_env_factory(
                 role=role,
                 discrete=False,
+                info_leadtime=[0, 0, 0, 0],
                 global_observable=True,
                 cost_type="clark_scarf",
-                info_leadtime=[0, 0, 0, 0],
                 shipment_leadtime=[4, 4, 4, 3],
             ),
             max_episode_steps=100,
