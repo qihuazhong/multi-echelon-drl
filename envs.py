@@ -263,6 +263,7 @@ def make_beer_game_normal_multi_facility(
 def make_beer_game_uniform_multi_facility(
     global_observable: bool = False,
     cost_type="general",
+    state_version="v0",
     agent_managed_facilities=None,
     max_episode_steps: int = 100,
     return_dict: bool = False,
@@ -359,7 +360,13 @@ def make_beer_game_uniform_multi_facility(
     ]
 
     num_agent_managed_facilities = len(agent_managed_facilities)
-    sn = SupplyNetwork(nodes=nodes, arcs=arcs, agent_managed_facilities=agent_managed_facilities, cost_type=cost_type)
+    sn = SupplyNetwork(
+        nodes=nodes,
+        arcs=arcs,
+        agent_managed_facilities=agent_managed_facilities,
+        cost_type=cost_type,
+        state_version=state_version,
+    )
 
     if box_action_space:
         action_space = gym.spaces.Box(0, 16, shape=(num_agent_managed_facilities,))

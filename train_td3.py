@@ -26,6 +26,8 @@ def main():
         help="Should be one of 'general', 'clark-scarf'",
     )
 
+    parser.add_argument("--state-version", type=str, default="v0", required=False)
+
     parser.add_argument(
         "-i",
         "--info-scope",
@@ -74,7 +76,7 @@ def main():
     if params["hge_rate_at_start"] > 0 and args.role != "MultiFacility":
         raise NotImplementedError("For now the TD3 with HGE only supports centralized setting")
 
-    env_name = f"BeerGame{'CSCost' * (args.cost_type == 'clark-scarf')}{demand_type}{args.role}{'FullInfo' * (args.info_scope == 'global')}-v0"
+    env_name = f"BeerGame{'CSCost' * (args.cost_type == 'clark-scarf')}{demand_type}{args.role}{'FullInfo' * (args.info_scope == 'global')}-{args.state_version}"
 
     bsp = BaseStockPolicy(
         target_levels=benchmark_target_stock_level,
