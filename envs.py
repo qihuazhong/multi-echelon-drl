@@ -1,5 +1,5 @@
 import logging
-from typing import Union, Tuple, List, Dict
+from typing import Union, Tuple, List, Dict, Optional
 import numpy as np
 from numpy import ndarray
 
@@ -118,8 +118,8 @@ def make_beer_game_normal_multi_facility(
     box_action_space: bool = False,
     cost_type="general",
     state_version="v0",
-    info_leadtime=None,
-    shipment_leadtime=None,
+    info_leadtime: Optional[List[int]] = None,
+    shipment_leadtime: Optional[List[int]] = None,
     target_levels=None,
 ):
     if agent_managed_facilities is None:
@@ -127,8 +127,7 @@ def make_beer_game_normal_multi_facility(
 
     if len(agent_managed_facilities) > 1 and not box_action_space:
         raise ValueError(
-            "length of agent_managed_facilities >= 1, only box_action_space is allowed. Please specify"
-            "box_action_space=True"
+            "length of agent_managed_facilities >= 1, only box_action_space is allowed. Please specify" "box_action_space=True"
         )
 
     if info_leadtime is None:
@@ -147,17 +146,39 @@ def make_beer_game_normal_multi_facility(
 
     demand_generator = Demand("normal", mean=10, sd=2, size=max_episode_steps)
 
-    array_index = {
-        "on_hand": 0,
-        "unfilled_demand": 1,
-        "latest_demand": 2,
-        "unreceived_pipeline": [3, 4, 5, 6],
-    }
+    if state_version == "v0":
+        array_index = {
+            "on_hand": 0,
+            "unfilled_demand": 1,
+            "latest_demand": 2,
+            "unreceived_pipeline": [3, 4, 5, 6],
+        }
+        state_dim_per_facility = 7
 
-    bsp_48 = BaseStockPolicy(target_levels=[target_levels[0]], array_index=array_index, state_dim_per_facility=7)
-    bsp_43 = BaseStockPolicy(target_levels=[target_levels[1]], array_index=array_index, state_dim_per_facility=7)
-    bsp_41 = BaseStockPolicy(target_levels=[target_levels[2]], array_index=array_index, state_dim_per_facility=7)
-    bsp_30 = BaseStockPolicy(target_levels=[target_levels[3]], array_index=array_index, state_dim_per_facility=7)
+    elif state_version == "v1":
+        array_index = {
+            "on_hand": 0,
+            "unfilled_demand": 1,
+            "latest_demand": 2,
+            "on_order": 3,
+            "unreceived_pipeline": [4, 5, 6, 7],
+        }
+        state_dim_per_facility = 8
+    else:
+        raise ValueError
+
+    bsp_48 = BaseStockPolicy(
+        target_levels=[target_levels[0]], array_index=array_index, state_dim_per_facility=state_dim_per_facility
+    )
+    bsp_43 = BaseStockPolicy(
+        target_levels=[target_levels[1]], array_index=array_index, state_dim_per_facility=state_dim_per_facility
+    )
+    bsp_41 = BaseStockPolicy(
+        target_levels=[target_levels[2]], array_index=array_index, state_dim_per_facility=state_dim_per_facility
+    )
+    bsp_30 = BaseStockPolicy(
+        target_levels=[target_levels[3]], array_index=array_index, state_dim_per_facility=state_dim_per_facility
+    )
 
     if random_init:
         init_inventory = [0, 21]
@@ -246,9 +267,11 @@ def make_beer_game_normal_multi_facility(
         action_space = gym.spaces.Discrete(21)
 
     if global_observable:
-        observation_space = gym.spaces.Box(low=-np.inf, high=np.inf, shape=(7 * len(sn.internal_nodes),))
+        observation_space = gym.spaces.Box(low=-np.inf, high=np.inf, shape=(state_dim_per_facility * len(sn.internal_nodes),))
     else:
-        observation_space = gym.spaces.Box(low=-np.inf, high=np.inf, shape=(7 * num_agent_managed_facilities,))
+        observation_space = gym.spaces.Box(
+            low=-np.inf, high=np.inf, shape=(state_dim_per_facility * num_agent_managed_facilities,)
+        )
 
     return InventoryManagementEnvMultiPlayer(
         sn,
@@ -262,29 +285,54 @@ def make_beer_game_normal_multi_facility(
 
 def make_beer_game_uniform_multi_facility(
     global_observable: bool = False,
-    cost_type="general",
-    state_version="v0",
     agent_managed_facilities=None,
     max_episode_steps: int = 100,
     return_dict: bool = False,
     random_init: bool = True,
     box_action_space: bool = False,
+    cost_type="general",
+    state_version="v0",
+    info_leadtime: Optional[List[int]] = None,
+    shipment_leadtime: Optional[List[int]] = None,
 ):
     if agent_managed_facilities is None:
         agent_managed_facilities = ["retailer", "wholesaler", "distributor", "manufacturer"]
 
     if len(agent_managed_facilities) > 1 and not box_action_space:
         raise ValueError(
-            "length of agent_managed_facilities >= 1, only box_action_space is allowed. Please specify"
-            "box_action_space=True"
+            "length of agent_managed_facilities >= 1, only box_action_space is allowed. Please specify" "box_action_space=True"
         )
     demand_generator = Demand("uniform", low=0, high=8, size=max_episode_steps)
 
-    array_index = {"on_hand": 0, "unfilled_demand": 1, "latest_demand": 2, "unreceived_pipeline": [3, 4, 5, 6]}
+    if info_leadtime is None:
+        info_leadtime = [2, 2, 2, 1]
+    if shipment_leadtime is None:
+        shipment_leadtime = [2, 2, 2, 2]
 
-    bsp_19 = BaseStockPolicy(target_levels=[19], array_index=array_index, state_dim_per_facility=7)
-    bsp_20 = BaseStockPolicy(target_levels=[20], array_index=array_index, state_dim_per_facility=7)
-    bsp_14 = BaseStockPolicy(target_levels=[14], array_index=array_index, state_dim_per_facility=7)
+    if state_version == "v0":
+        array_index = {
+            "on_hand": 0,
+            "unfilled_demand": 1,
+            "latest_demand": 2,
+            "unreceived_pipeline": [3, 4, 5, 6],
+        }
+        state_dim_per_facility = 7
+
+    elif state_version == "v1":
+        array_index = {
+            "on_hand": 0,
+            "unfilled_demand": 1,
+            "latest_demand": 2,
+            "on_order": 3,
+            "unreceived_pipeline": [4, 5, 6, 7],
+        }
+        state_dim_per_facility = 8
+    else:
+        raise ValueError
+
+    bsp_19 = BaseStockPolicy(target_levels=[19], array_index=array_index, state_dim_per_facility=state_dim_per_facility)
+    bsp_20 = BaseStockPolicy(target_levels=[20], array_index=array_index, state_dim_per_facility=state_dim_per_facility)
+    bsp_14 = BaseStockPolicy(target_levels=[14], array_index=array_index, state_dim_per_facility=state_dim_per_facility)
 
     if random_init:
         init_inventory = [0, 25]
@@ -324,8 +372,8 @@ def make_beer_game_uniform_multi_facility(
         Arc(
             "external_supplier",
             "manufacturer",
-            1,
-            2,
+            info_leadtime[3],
+            shipment_leadtime[3],
             initial_shipments=init_shipments[0],
             initial_sales_orders=init_sales_orders[0],
             random_init=random_init,
@@ -333,8 +381,8 @@ def make_beer_game_uniform_multi_facility(
         Arc(
             "manufacturer",
             "distributor",
-            2,
-            2,
+            info_leadtime[2],
+            shipment_leadtime[2],
             initial_shipments=init_shipments[1],
             initial_sales_orders=init_sales_orders[1],
             random_init=random_init,
@@ -342,8 +390,8 @@ def make_beer_game_uniform_multi_facility(
         Arc(
             "distributor",
             "wholesaler",
-            2,
-            2,
+            info_leadtime[1],
+            shipment_leadtime[1],
             initial_shipments=init_shipments[2],
             initial_sales_orders=init_sales_orders[2],
             random_init=random_init,
@@ -351,8 +399,8 @@ def make_beer_game_uniform_multi_facility(
         Arc(
             "wholesaler",
             "retailer",
-            2,
-            2,
+            info_leadtime[0],
+            shipment_leadtime[0],
             initial_shipments=init_shipments[3],
             initial_sales_orders=init_sales_orders[3],
             random_init=random_init,
@@ -374,9 +422,11 @@ def make_beer_game_uniform_multi_facility(
         action_space = gym.spaces.Discrete(17)
 
     if global_observable:
-        observation_space = gym.spaces.Box(low=-np.inf, high=np.inf, shape=(7 * len(sn.internal_nodes),))
+        observation_space = gym.spaces.Box(low=-np.inf, high=np.inf, shape=(state_dim_per_facility * len(sn.internal_nodes),))
     else:
-        observation_space = gym.spaces.Box(low=-np.inf, high=np.inf, shape=(7 * num_agent_managed_facilities,))
+        observation_space = gym.spaces.Box(
+            low=-np.inf, high=np.inf, shape=(state_dim_per_facility * num_agent_managed_facilities,)
+        )
 
     return InventoryManagementEnvMultiPlayer(
         sn,

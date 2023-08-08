@@ -41,9 +41,7 @@ class SupplyNetwork:
         # order of the information flow
         self.order_sequence: List[str] = graph.parse_order_sequence([node for node in self.nodes], self.customers_dict)
         # order of the shipment flow
-        self.shipment_sequence: List[str] = [
-            self.order_sequence[i] for i in range(len(self.order_sequence) - 1, -1, -1)
-        ]
+        self.shipment_sequence: List[str] = [self.order_sequence[i] for i in range(len(self.order_sequence) - 1, -1, -1)]
 
         self.agent_managed_facilities = agent_managed_facilities
         self.agent_indexes = [self.order_sequence.index(player) for player in self.agent_managed_facilities]
@@ -161,9 +159,7 @@ class SupplyNetwork:
         downstream_arcs = [self.arcs[(node_name, customer)] for customer in customers]
 
         unfilled_demand += sum([arc.sales_orders.requires_shipment_subtotal for arc in downstream_arcs])
-        unfilled_demand += (
-            self.nodes[node_name].current_external_demand + self.nodes[node_name].unfilled_independent_demand
-        )
+        unfilled_demand += self.nodes[node_name].current_external_demand + self.nodes[node_name].unfilled_independent_demand
 
         # latest demand
         latest_demand = sum(self.nodes[node_name].latest_demand) + self.nodes[node_name].current_external_demand
@@ -182,7 +178,7 @@ class SupplyNetwork:
             "on_hand": on_hand,
             "unfilled_demand": unfilled_demand,
             "latest_demand": latest_demand,
-            # 'on_order': on_order,
+            # "on_order": on_order,
         }
 
         # TODO Move this to the test
@@ -198,6 +194,8 @@ class SupplyNetwork:
         if self.state_version == "v0":
             pass
         elif self.state_version == "v1":
+            states_dict["on_order"] = on_order
+
             arc = upstream_arcs[0]
             # unreceived_quantity_pipeline[f"unreceived_pipeline_{3}"] = sum(arc.unreceived_quantities[i] for arc in upstream_arcs for i in range(M))
             # unreceived_quantity_pipeline[f"unreceived_pipeline_{2}"] = arc.sales_orders.unshipped_subtotal
@@ -295,7 +293,10 @@ class SupplyNetwork:
                 consumed = 0
                 for i in range(len(arc.unreceived_quantities) - 1, -1, -1):
                     if self.nodes[customer].last_received - consumed > 0:
-                        filled_qty = min(arc.unreceived_quantities[i], self.nodes[customer].last_received - consumed)
+                        filled_qty = min(
+                            arc.unreceived_quantities[i],
+                            self.nodes[customer].last_received - consumed,
+                        )
                         arc.unreceived_quantities[i] -= filled_qty
                         consumed += filled_qty
 
@@ -442,9 +443,7 @@ class SupplyNetwork:
                 + sum(sum(arc.unreceived_quantities) for arc in self.get_outgoing_arcs(node.name))
             )
 
-            echelon_stock += sum(
-                [self.nodes[customer].echelon_stock for customer in self.customers_dict[query_node_name]]
-            )
+            echelon_stock += sum([self.nodes[customer].echelon_stock for customer in self.customers_dict[query_node_name]])
             node.echelon_stock = echelon_stock
 
         if node.is_demand_source:
@@ -546,7 +545,10 @@ class SupplyNetwork:
             modified_dict = {
                 key: {"node_name": key, "period": np.arange(history_len), **item} for key, item in cost_dict.items()
             }
-            return pd.concat([pd.DataFrame().from_dict(item) for key, item in modified_dict.items()], ignore_index=True)
+            return pd.concat(
+                [pd.DataFrame().from_dict(item) for key, item in modified_dict.items()],
+                ignore_index=True,
+            )
         else:
             return cost_dict
 
@@ -595,7 +597,10 @@ def from_dict(network_config: dict) -> SupplyNetwork:
             }
 
             fallback_policy = BaseStockPolicy(
-                target_levels=[target_stock_level], array_index=array_index, state_dim_per_facility=7, ub=np.inf
+                target_levels=[target_stock_level],
+                array_index=array_index,
+                state_dim_per_facility=7,
+                ub=np.inf,
             )
         else:
             fallback_policy = None
@@ -628,6 +633,9 @@ def from_dict(network_config: dict) -> SupplyNetwork:
         )
 
     sn = SupplyNetwork(
-        nodes=nodes, arcs=arcs, agent_managed_facilities=agent_managed_facilities, cost_type=network_config["cost_type"]
+        nodes=nodes,
+        arcs=arcs,
+        agent_managed_facilities=agent_managed_facilities,
+        cost_type=network_config["cost_type"],
     )
     return sn

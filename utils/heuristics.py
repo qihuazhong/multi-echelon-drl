@@ -29,9 +29,7 @@ class DRLPolicy(InventoryPolicy):
             # return self.model.predict(observation)
 
         elif isinstance(observation, dict):
-            observation = np.array(
-                [list(state.values()) for agent, state in observation.items()], dtype=np.float32
-            ).flatten()
+            observation = np.array([list(state.values()) for agent, state in observation.items()], dtype=np.float32).flatten()
 
             actions, _ = self.model.predict(self.vec_normalize.normalize_obs(observation), deterministic=True)
             # print(observation, actions)
@@ -82,9 +80,14 @@ class BaseStockPolicy(InventoryPolicy):
 
             on_hands = agent_states[np.arange(self.array_index["on_hand"], state_len, step)]
             unfilled_demands = agent_states[np.arange(self.array_index["unfilled_demand"], state_len, step)]
-            on_orders = np.sum(
-                [agent_states[np.arange(i, state_len, step)] for i in self.array_index["unreceived_pipeline"]], axis=0
-            )
+
+            if "on_order" in self.array_index.keys():
+                on_orders = agent_states[np.arange(self.array_index["on_order"], state_len, step)]
+            else:
+                on_orders = np.sum(
+                    [agent_states[np.arange(i, state_len, step)] for i in self.array_index["unreceived_pipeline"]], axis=0
+                )
+
             if self.rule == "d+a":
                 latest_demand = agent_states[np.arange(self.array_index["latest_demand"], state_len, step)]
                 quantities = self.target_levels - (on_hands + on_orders - unfilled_demands) - latest_demand
@@ -98,7 +101,11 @@ class BaseStockPolicy(InventoryPolicy):
                 on_hands = agent_state["on_hand"]
                 unfilled_demands = agent_state["unfilled_demand"]
 
-                on_orders = sum([agent_state[f"unreceived_pipeline_{i}"] for i in range(4)])
+                if "on_order" in self.array_index.keys():
+                    on_orders = agent_state["on_order"]
+                else:
+                    on_orders = sum([agent_state[f"unreceived_pipeline_{i}"] for i in range(4)])
+
                 # unfilled_demand = agent_state['unfilled_demand']
                 quantity = self.target_levels - (on_hands + on_orders - unfilled_demands)
                 if self.rule == "d+a":

@@ -23,6 +23,8 @@ def main():
         help="Should be one of 'general', 'clark-scarf'",
     )
 
+    parser.add_argument("--state-version", type=str, default="v0", required=False)
+
     parser.add_argument(
         "-i",
         "--info-scope",
@@ -69,7 +71,7 @@ def main():
     params = setup["hyperparameters"]["dqn"]
     print(args)
     print(params)
-    env_name = f"BeerGame{'CSCost'*(args.cost_type=='clark-scarf')}{demand_type}{args.role}{'FullInfo'*(args.info_scope=='global')}Discrete-v0"
+    env_name = f"BeerGame{'CSCost'*(args.cost_type=='clark-scarf')}{demand_type}{args.role}{'FullInfo'*(args.info_scope=='global')}Discrete-{args.state_version}"
 
     n_env = 8
 
