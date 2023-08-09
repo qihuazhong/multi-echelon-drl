@@ -111,16 +111,14 @@ def main():
             raise ValueError
 
     for run in range(setup["runs"]):
-        exp_name = f"{args.name}_TD3_{args.role}_{args.scenario}{'_CSCost'*(args.cost_type=='clark-scarf')}{'_FullInfo'*(args.info_scope=='global')}{'_hge'*(params['hge_rate_at_start']>0)}_{args.ordering_rule}_{run}_{time.time_ns()}"
+        exp_name = f"{args.name}_TD3_{args.role}_{args.scenario}{'_CSCost'*(args.cost_type=='clark-scarf')}{'_FullInfo'*(args.info_scope=='global')}{'_hge'*(params['hge_rate_at_start']>0)}_{args.ordering_rule}_{args.state_version}_{run}_{time.time_ns()}"
         env = VecNormalize(make_vec_env(env_factory, n_env, vec_env_cls=SubprocVecEnv), clip_obs=100, clip_reward=1000)
         # eval_env = VecNormalize(make_vec_env(env_factory, n_env), clip_obs=100, clip_reward=1000)
 
         policy_kwargs = dict(net_arch=[params["network_width"]] * params["num_layers"])
 
         n_actions = env.action_space.shape[-1]
-        action_noise = NormalActionNoise(
-            mean=np.zeros(n_actions), sigma=params["action_noise_std"] * np.ones(n_actions)
-        )
+        action_noise = NormalActionNoise(mean=np.zeros(n_actions), sigma=params["action_noise_std"] * np.ones(n_actions))
         model = HgeTD3(
             "MlpPolicy",
             env,
