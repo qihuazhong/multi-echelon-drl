@@ -165,6 +165,12 @@ def register_envs():
         )
 
         gym.envs.register(
+            id=f"BeerGameUniform{key}-v1",
+            entry_point=uniform_env_factory(role=role, discrete=False, global_observable=False, state_version="v1"),
+            max_episode_steps=100,
+        )
+
+        gym.envs.register(
             id=f"BeerGameUniform{key}Discrete-v0",
             entry_point=uniform_env_factory(role=role, discrete=True, global_observable=False),
             max_episode_steps=100,
@@ -217,6 +223,19 @@ def register_envs():
                 global_observable=False,
                 info_leadtime=[2, 2, 2, 1],
                 shipment_leadtime=[2, 2, 2, 2],
+            ),
+            max_episode_steps=100,
+        )
+
+        gym.envs.register(
+            id=f"BeerGameNormal{key}-v1",
+            entry_point=normal_env_factory(
+                role=role,
+                discrete=False,
+                global_observable=False,
+                info_leadtime=[2, 2, 2, 1],
+                shipment_leadtime=[2, 2, 2, 2],
+                state_version="v1",
             ),
             max_episode_steps=100,
         )
