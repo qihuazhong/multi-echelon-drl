@@ -116,6 +116,7 @@ def make_beer_game_normal_multi_facility(
     return_dict: bool = False,
     random_init: bool = False,
     box_action_space: bool = False,
+    multi_discrete_action_space: bool = False,
     cost_type="general",
     state_version="v0",
     info_leadtime: Optional[List[int]] = None,
@@ -263,6 +264,8 @@ def make_beer_game_normal_multi_facility(
     )
     if box_action_space:
         action_space = gym.spaces.Box(0, 20, shape=(num_agent_managed_facilities,))
+    elif multi_discrete_action_space:
+        action_space = gym.spaces.MultiDiscrete([21] * num_agent_managed_facilities)
     else:
         action_space = gym.spaces.Discrete(21)
 
@@ -290,6 +293,7 @@ def make_beer_game_uniform_multi_facility(
     return_dict: bool = False,
     random_init: bool = True,
     box_action_space: bool = False,
+    multi_discrete_action_space: bool = False,
     cost_type="general",
     state_version="v0",
     info_leadtime: Optional[List[int]] = None,
@@ -298,10 +302,10 @@ def make_beer_game_uniform_multi_facility(
     if agent_managed_facilities is None:
         agent_managed_facilities = ["retailer", "wholesaler", "distributor", "manufacturer"]
 
-    if len(agent_managed_facilities) > 1 and not box_action_space:
-        raise ValueError(
-            "length of agent_managed_facilities >= 1, only box_action_space is allowed. Please specify" "box_action_space=True"
-        )
+    # if len(agent_managed_facilities) > 1 and not box_action_space:
+    #     raise ValueError(
+    #         "length of agent_managed_facilities >= 1, only box_action_space is allowed. Please specify" "box_action_space=True"
+    #     )
     demand_generator = Demand("uniform", low=0, high=8, size=max_episode_steps)
 
     if info_leadtime is None:
@@ -418,6 +422,8 @@ def make_beer_game_uniform_multi_facility(
 
     if box_action_space:
         action_space = gym.spaces.Box(0, 16, shape=(num_agent_managed_facilities,))
+    elif multi_discrete_action_space:
+        action_space = gym.spaces.MultiDiscrete([17] * num_agent_managed_facilities)
     else:
         action_space = gym.spaces.Discrete(17)
 

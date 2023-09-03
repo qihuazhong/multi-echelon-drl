@@ -17,9 +17,7 @@ def uniform_multi_facility_dplusa_env_factory():
 
 # For td3 hyperparameters tuning
 def uniform_single_facility_retailer_dplusa_env_factory():
-    env = make_beer_game_uniform_multi_facility(
-        agent_managed_facilities=["retailer"], box_action_space=True, random_init=True
-    )
+    env = make_beer_game_uniform_multi_facility(agent_managed_facilities=["retailer"], box_action_space=True, random_init=True)
     env = wrap_action_d_plus_a(env, offset=-8, lb=0, ub=16)
     return env
 
@@ -33,11 +31,15 @@ def uniform_single_facility_retailer_discrete_dplusa_env_factory():
     return env
 
 
-def uniform_env_factory(role: List[str], discrete: bool, global_observable: bool, state_version="v0"):
+def uniform_env_factory(
+    role: List[str], discrete: bool, global_observable: bool, multi_discrete_action_space=False, state_version="v0"
+):
     def func():
+        # TODO
         env = make_beer_game_uniform_multi_facility(
             agent_managed_facilities=role,
             box_action_space=not discrete,
+            multi_discrete_action_space=multi_discrete_action_space,
             random_init=True,
             global_observable=global_observable,
             state_version=state_version,
@@ -53,19 +55,23 @@ def normal_env_factory(
     global_observable: bool,
     info_leadtime: List[int],
     shipment_leadtime: List[int],
+    multi_discrete_action_space=False,
     cost_type="general",
     state_version="v0",
+    target_levels=None,
 ):
     def func():
         env = make_beer_game_normal_multi_facility(
             agent_managed_facilities=role,
             box_action_space=not discrete,
+            multi_discrete_action_space=multi_discrete_action_space,
             random_init=True,
             global_observable=global_observable,
             cost_type=cost_type,
             state_version=state_version,
             info_leadtime=info_leadtime,
             shipment_leadtime=shipment_leadtime,
+            target_levels=target_levels,
         )
         return env
 
@@ -126,6 +132,18 @@ def register_envs():
     )
 
     gym.envs.register(
+        id="BeerGameUniformMultiFacilityFullInfoDiscrete-v1",
+        entry_point=uniform_env_factory(
+            role=["retailer", "wholesaler", "distributor", "manufacturer"],
+            discrete=True,
+            multi_discrete_action_space=True,
+            global_observable=True,
+            state_version="v1",
+        ),
+        max_episode_steps=100,
+    )
+
+    gym.envs.register(
         id="BeerGameNormalMultiFacilityFullInfo-v0",
         entry_point=normal_env_factory(
             role=["retailer", "wholesaler", "distributor", "manufacturer"],
@@ -149,6 +167,50 @@ def register_envs():
         ),
         max_episode_steps=100,
     )
+
+    gym.envs.register(
+        id="BeerGameCSCostNormalMultiFacilityFullInfo-v1",
+        entry_point=normal_env_factory(
+            role=["retailer", "wholesaler", "distributor", "manufacturer"],
+            discrete=False,
+            global_observable=True,
+            state_version="v1",
+            cost_type="clark-scarf",
+            info_leadtime=[0, 0, 0, 0],
+            shipment_leadtime=[4, 4, 4, 3],
+        ),
+        max_episode_steps=100,
+    )
+
+    gym.envs.register(
+        id="BeerGameNormalMultiFacilityFullInfoDiscrete-v1",
+        entry_point=normal_env_factory(
+            role=["retailer", "wholesaler", "distributor", "manufacturer"],
+            discrete=True,
+            multi_discrete_action_space=True,
+            global_observable=True,
+            state_version="v1",
+            info_leadtime=[2, 2, 2, 1],
+            shipment_leadtime=[2, 2, 2, 2],
+        ),
+        max_episode_steps=100,
+    )
+
+    gym.envs.register(
+        id="BeerGameCSCostNormalMultiFacilityFullInfoDiscrete-v1",
+        entry_point=normal_env_factory(
+            role=["retailer", "wholesaler", "distributor", "manufacturer"],
+            discrete=True,
+            multi_discrete_action_space=True,
+            global_observable=True,
+            state_version="v1",
+            cost_type="clark-scarf",
+            info_leadtime=[0, 0, 0, 0],
+            shipment_leadtime=[4, 4, 4, 3],
+        ),
+        max_episode_steps=100,
+    )
+
     roles = {
         "Retailer": ["retailer"],
         "Wholesaler": ["wholesaler"],
@@ -321,7 +383,7 @@ def register_envs():
                 role=role,
                 discrete=True,
                 global_observable=False,
-                cost_type="clark_scarf",
+                cost_type="clark-scarf",
                 info_leadtime=[0, 0, 0, 0],
                 shipment_leadtime=[4, 4, 4, 3],
             ),
@@ -334,9 +396,23 @@ def register_envs():
                 role=role,
                 discrete=True,
                 global_observable=True,
-                cost_type="clark_scarf",
+                cost_type="clark-scarf",
                 info_leadtime=[0, 0, 0, 0],
                 shipment_leadtime=[4, 4, 4, 3],
+            ),
+            max_episode_steps=100,
+        )
+
+        gym.envs.register(
+            id=f"BeerGameCSCostNormal{key}FullInfoDiscrete-v1",
+            entry_point=normal_env_factory(
+                role=role,
+                discrete=True,
+                global_observable=True,
+                cost_type="clark-scarf",
+                info_leadtime=[0, 0, 0, 0],
+                shipment_leadtime=[4, 4, 4, 3],
+                state_version="v1",
             ),
             max_episode_steps=100,
         )
@@ -347,12 +423,13 @@ def register_envs():
                 role=role,
                 discrete=False,
                 global_observable=False,
-                cost_type="clark_scarf",
+                cost_type="clark-scarf",
                 info_leadtime=[0, 0, 0, 0],
                 shipment_leadtime=[4, 4, 4, 3],
             ),
             max_episode_steps=100,
         )
+
         gym.envs.register(
             id=f"BeerGameCSCostNormal{key}FullInfo-v0",
             entry_point=normal_env_factory(
@@ -360,8 +437,22 @@ def register_envs():
                 discrete=False,
                 info_leadtime=[0, 0, 0, 0],
                 global_observable=True,
-                cost_type="clark_scarf",
+                cost_type="clark-scarf",
                 shipment_leadtime=[4, 4, 4, 3],
+            ),
+            max_episode_steps=100,
+        )
+
+        gym.envs.register(
+            id=f"BeerGameCSCostNormal{key}FullInfo-v1",
+            entry_point=normal_env_factory(
+                role=role,
+                discrete=False,
+                info_leadtime=[0, 0, 0, 0],
+                global_observable=True,
+                cost_type="clark-scarf",
+                shipment_leadtime=[4, 4, 4, 3],
+                state_version="v1",
             ),
             max_episode_steps=100,
         )

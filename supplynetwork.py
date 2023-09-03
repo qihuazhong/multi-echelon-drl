@@ -310,122 +310,15 @@ class SupplyNetwork:
             if self.nodes[node_name].is_demand_source:
                 self.nodes[node_name].unfilled_demand += self.nodes[node_name].fill_independent_demand()
 
-        # for node in self.order_sequence:
-        #     self.get_clack_scarf_cost_by_node_name(query_node_name=node)
+        if self.cost_type == "clark-scarf":
+            for node in self.order_sequence:
+                self.get_clark_scarf_cost_by_node_name(query_node_name=node)
 
         for node_name, node in self.nodes.items():
             if node.is_demand_source:
                 node.update_demand()
 
-    # def get_clack_scarf_cost(self):
-    #
-    #     c_h = 0  # inventory holding cost
-    #     c_b = 0  # backlog cost
-    #
-    #     internal_nodes: List[Node] = [node for node_name, node in self.nodes.items() if not node.is_external_supplier]
-    #     echelon_stock = 0
-    #
-    #     for node_name in self.order_sequence:
-    #
-    #         node = self.nodes[node_name]
-    #         if node.is_external_supplier:
-    #             continue
-    #
-    #         current_backlog_cost = 0
-    #
-    #         if node.is_demand_source:
-    #             # backlog cost
-    #             current_backlog_cost = -node.unfilled_demand * node.unit_backlog_cost
-    #
-    #             # echelon stock
-    #             echelon_stock += node.current_inventory
-    #             current_holding_cost = -echelon_stock * 0.25
-    #
-    #             c_b += current_backlog_cost
-    #             c_h += current_holding_cost
-    #
-    #         else:
-    #             # echelon stock
-    #             echelon_stock += (
-    #                 node.current_inventory
-    #                 - node.unfilled_demand
-    #                 + sum(sum(arc.unreceived_quantities) for arc in self.get_incoming_arcs(node.name))
-    #             )
-    #
-    #             current_holding_cost = -echelon_stock * 0.25
-    #
-    #             c_b += current_backlog_cost
-    #             c_h += current_holding_cost
-    #
-    #         node.backlog_history.append(node.unfilled_demand)
-    #         node.backlog_cost_history.append(current_backlog_cost)
-    #
-    #         node.inventory_history.append(echelon_stock)
-    #         node.holding_cost_history.append(current_holding_cost)
-    #
-    #     return c_h + c_b
-    #
-    # def get_clack_scarf_backlog_cost_by_node_name(self, query_node_name: str):
-    #
-    #     # c_h = 0  # inventory holding cost
-    #     c_b = 0  # backlog cost
-    #
-    #     # echelon_stock = 0
-    #     node = self.nodes[query_node_name]
-    #
-    #     if node.is_demand_source:
-    #         c_b = -node.unfilled_demand * node.unit_backlog_cost
-    #         # c_h = -echelon_stock * 0.25
-    #     else:
-    #         c_b = 0
-    #         # c_h = -echelon_stock * 0.25
-    #
-    #     node.backlog_history.append(node.unfilled_demand)
-    #     node.backlog_cost_history.append(c_b)
-    #
-    #     # node.inventory_history.append(echelon_stock)
-    #     # node.holding_cost_history.append(c_h)
-    #
-    #     return c_b
-    #
-    # def get_clack_scarf_holding_cost_by_node_name(self, query_node_name: str):
-    #
-    #     c_h = 0  # inventory holding cost
-    #     # c_b = 0  # backlog cost
-    #
-    #     echelon_stock = 0
-    #     node = self.nodes[query_node_name]
-    #     if node.is_demand_source:
-    #         echelon_stock += max(0, node.current_inventory)
-    #         node.echelon_stock = echelon_stock
-    #     else:
-    #         echelon_stock += (
-    #             node.current_inventory
-    #             - node.unfilled_demand
-    #             + sum(sum(arc.unreceived_quantities) for arc in self.get_incoming_arcs(node.name))
-    #         )
-    #
-    #         echelon_stock += sum(
-    #             [self.nodes[customer].echelon_stock for customer in self.customers_dict[query_node_name]]
-    #         )
-    #         node.echelon_stock = echelon_stock
-    #
-    #     if node.is_demand_source:
-    #         # c_b = -node.unfilled_demand * node.unit_backlog_cost
-    #         c_h = -echelon_stock * 0.25
-    #     else:
-    #         # c_b = 0
-    #         c_h = -echelon_stock * 0.25
-    #
-    #     # node.backlog_history.append(node.unfilled_demand)
-    #     # node.backlog_cost_history.append(c_b)
-    #
-    #     node.inventory_history.append(echelon_stock)
-    #     node.holding_cost_history.append(c_h)
-    #
-    #     return c_h  # + c_b
-
-    def get_clack_scarf_cost_by_node_name(self, query_node_name: str):
+    def get_clark_scarf_cost_by_node_name(self, query_node_name: str):
 
         c_h = 0  # inventory holding cost
         c_b = 0  # backlog cost
@@ -506,7 +399,7 @@ class SupplyNetwork:
         if self.cost_type == "general":
             return self.get_general_cost()
 
-        elif self.cost_type == "clark_scarf":
+        elif self.cost_type == "clark-scarf":
             return sum(
                 [
                     self.nodes[node_name].holding_cost_history[-1] + self.nodes[node_name].backlog_cost_history[-1]

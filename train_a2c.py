@@ -16,6 +16,15 @@ def main():
     parser = argparse.ArgumentParser()
 
     # Adding required argument
+
+    parser.add_argument(
+        "--action-space",
+        type=str,
+        default="discrete",
+        required=True,
+        help="Should be one of 'discrete', 'continuous'",
+    )
+
     parser.add_argument(
         "--cost-type",
         type=str,
@@ -55,8 +64,8 @@ def main():
     with open(args.hyperparameters) as fh:
         setup = yaml.load(fh, Loader=yaml.FullLoader)
 
-    if args.role == "MultiFacility":
-        raise NotImplementedError("For now the implemented A2C only supports the decentralized setting")
+    # if args.role == "MultiFacility":
+    #     raise NotImplementedError("For now the implemented A2C only supports the decentralized setting")
 
     if args.scenario == "basic":
         demand_type = "Normal"
@@ -70,7 +79,7 @@ def main():
     params = setup["hyperparameters"]["a2c"]
     print(args)
     print(params)
-    env_name = f"BeerGame{'CSCost'*(args.cost_type=='clark-scarf')}{demand_type}{args.role}{'FullInfo'*(args.info_scope=='global')}Discrete-{args.state_version}"
+    env_name = f"BeerGame{'CSCost'*(args.cost_type=='clark-scarf')}{demand_type}{args.role}{'FullInfo'*(args.info_scope=='global')}{'Discrete'*(args.action_space=='discrete')}-{args.state_version}"
 
     n_env = 8
 
@@ -97,7 +106,8 @@ def main():
 
     for run in range(setup["runs"]):
 
-        exp_name = f"{args.name}_A2C_{args.role}_{args.scenario}{'_CSCost'*(args.cost_type=='clark-scarf')}{'_FullInfo'*(args.info_scope=='global')}_{args.ordering_rule}_{args.state_version}_{run}_{time.time_ns()}"
+        exp_name = f"{args.name}_A2C_{args.role}_{args.scenario}{'_CSCost'*(args.cost_type=='clark-scarf')}{'_FullInfo'*(args.info_scope=='global')}{'_Continuous'*(args.action_space=='continuous')}_{args.ordering_rule}_{args.state_version}_{run}_{time.time_ns()}"
+
         env = VecNormalize(make_vec_env(env_factory, n_env, vec_env_cls=SubprocVecEnv), clip_obs=100, clip_reward=1000)
         # env = VecNormalize(make_vec_env(env_factory, n_env), clip_obs=100, clip_reward=1000)
         # eval_env = VecNormalize(make_vec_env(env_factory, n_env), clip_obs=100, clip_reward=1000)
