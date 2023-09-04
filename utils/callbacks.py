@@ -1,14 +1,19 @@
+import numpy as np
 from stable_baselines3.common.callbacks import BaseCallback
 from stable_baselines3.common.logger import HParam
+from stable_baselines3.common.noise import NormalActionNoise
 
 
 class HgeRateCallback(BaseCallback):
-    def __init__(self, verbose: int = 0, mu_start=0.5, mu_end=0.0, decay_periods: int = 1000):
+    def __init__(self, verbose: int = 0, mu_start=0.5, mu_end=0.0, decay_periods: int = 1000, action_noise_annealing=False):
         super().__init__(verbose)
 
         self.mu_start = mu_start
         self.mu_end = mu_end
         self.decay_periods = decay_periods
+
+        self.action_noise_std = 0.4
+        self.action_noise_annealing = action_noise_annealing
 
     def _on_step(self) -> bool:
         return True
@@ -19,6 +24,12 @@ class HgeRateCallback(BaseCallback):
         self.model.hge_rate = self.mu_start - (self.mu_start - self.mu_end) * min(
             1.0, self.num_timesteps / 100 / self.decay_periods
         )
+
+        if self.action_noise_annealing:
+            self.model.action_noise = NormalActionNoise(
+                mean=np.zeros(4),
+                sigma=self.action_noise_std * (((10_000_000 - self.num_timesteps) / 10_000_000) ** 2) * np.ones(4),
+            )
 
         return self._on_step()
 
