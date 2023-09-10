@@ -5,7 +5,16 @@ import pandas as pd
 
 class Demand:
     def __init__(
-        self, demand_pattern="classic_beer_game", data_path=None, size=100, low=None, high=None, mean=None, sd=None
+        self,
+        demand_pattern="classic_beer_game",
+        data_path=None,
+        size=100,
+        low=None,
+        high=None,
+        mean=None,
+        sd=None,
+        n=None,
+        p=None,
     ):
         """
         Args:
@@ -16,6 +25,8 @@ class Demand:
             high: inclusive, must be provided when uniform pattern is specified
             mean: mean of a normal distribution, must be provided when normal pattern is specified
             sd: standard deviation of a normal distribution, must be provided when normal pattern is specified
+            n: parameter for negative binomial distribution
+            p: parameter for negative binomial distribution
         """
         self.demands_pattern = demand_pattern
         self._demands: np.ndarray = None
@@ -24,6 +35,8 @@ class Demand:
         self.high = high
         self.mean = mean
         self.sd = sd
+        self.n = n
+        self.p = p
         if data_path is not None:
             self.samples = pd.read_csv(data_path, header=None).values.reshape(-1)
             self.samples_length = self.samples.shape[0]
@@ -55,9 +68,11 @@ class Demand:
             self._demands = np.array([4] * 4 + [8] * (self.size - 4))
 
         elif self.demands_pattern == "negative_binomial":
-            n = 4298.87873
-            p = 0.0069131
-            self._demands = np.random.negative_binomial(n, p, size=104)
+            self._demands = np.random.negative_binomial(self.n, self.p, size=104)
+
+        elif self.demands_pattern == "bucketized_negative_binomial":
+            nb = np.random.negative_binomial(self.n, self.p, size=104)
+            self._demands = np.round(nb.clip(min=0, max=399) / 10).astype(int)
 
         elif self.demands_pattern == "samples":
             self._demands = self.samples
