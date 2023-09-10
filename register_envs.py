@@ -1,6 +1,10 @@
 from typing import List
 import gym
-from envs import make_beer_game_uniform_multi_facility, make_beer_game_normal_multi_facility
+from envs import (
+    make_beer_game_uniform_multi_facility,
+    make_beer_game_normal_multi_facility,
+    make_beer_game_dunnhumby_multi_facility,
+)
 from utils.wrappers import wrap_action_d_plus_a
 
 
@@ -37,6 +41,24 @@ def uniform_env_factory(
     def func():
         # TODO
         env = make_beer_game_uniform_multi_facility(
+            agent_managed_facilities=role,
+            box_action_space=not discrete,
+            multi_discrete_action_space=multi_discrete_action_space,
+            random_init=True,
+            global_observable=global_observable,
+            state_version=state_version,
+        )
+        return env
+
+    return func
+
+
+def dunnhumby_env_factory(
+    role: List[str], discrete: bool, global_observable: bool, multi_discrete_action_space=False, state_version="v0"
+):
+    def func():
+        # TODO
+        env = make_beer_game_dunnhumby_multi_facility(
             agent_managed_facilities=role,
             box_action_space=not discrete,
             multi_discrete_action_space=multi_discrete_action_space,
@@ -207,6 +229,29 @@ def register_envs():
             cost_type="clark-scarf",
             info_leadtime=[0, 0, 0, 0],
             shipment_leadtime=[4, 4, 4, 3],
+        ),
+        max_episode_steps=100,
+    )
+
+    gym.envs.register(
+        id="BeerGameDunnhumbyMultiFacilityFullInfo-v1",
+        entry_point=dunnhumby_env_factory(
+            role=["retailer", "wholesaler", "distributor", "manufacturer"],
+            discrete=False,
+            global_observable=True,
+            state_version="v1",
+        ),
+        max_episode_steps=100,
+    )
+
+    gym.envs.register(
+        id="BeerGameDunnhumbyMultiFacilityFullInfoDiscrete-v1",
+        entry_point=dunnhumby_env_factory(
+            role=["retailer", "wholesaler", "distributor", "manufacturer"],
+            discrete=True,
+            multi_discrete_action_space=True,
+            global_observable=True,
+            state_version="v1",
         ),
         max_episode_steps=100,
     )
@@ -452,6 +497,41 @@ def register_envs():
                 global_observable=True,
                 cost_type="clark-scarf",
                 shipment_leadtime=[4, 4, 4, 3],
+                state_version="v1",
+            ),
+            max_episode_steps=100,
+        )
+
+        # Dunnhumby
+        gym.envs.register(
+            id=f"BeerGameDunnhumby{key}-v1",
+            entry_point=dunnhumby_env_factory(role=role, discrete=False, global_observable=False, state_version="v1"),
+            max_episode_steps=100,
+        )
+
+        gym.envs.register(
+            id=f"BeerGameDunnhumby{key}Discrete-v1",
+            entry_point=dunnhumby_env_factory(role=role, discrete=True, global_observable=False, state_version="v1"),
+            max_episode_steps=100,
+        )
+
+        gym.envs.register(
+            id=f"BeerGameDunnhumby{key}FullInfo-v1",
+            entry_point=dunnhumby_env_factory(
+                role=role,
+                discrete=False,
+                global_observable=True,
+                state_version="v1",
+            ),
+            max_episode_steps=100,
+        )
+
+        gym.envs.register(
+            id=f"BeerGameDunnhumby{key}FullInfoDiscrete-v1",
+            entry_point=dunnhumby_env_factory(
+                role=role,
+                discrete=True,
+                global_observable=True,
                 state_version="v1",
             ),
             max_episode_steps=100,

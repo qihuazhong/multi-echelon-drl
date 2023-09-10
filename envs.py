@@ -109,6 +109,177 @@ class InventoryManagementEnvMultiPlayer(gym.Env):
         pass
 
 
+def make_beer_game_dunnhumby_multi_facility(
+    global_observable: bool = False,
+    agent_managed_facilities=None,
+    max_episode_steps: int = 100,
+    return_dict: bool = False,
+    random_init: bool = False,
+    box_action_space: bool = False,
+    multi_discrete_action_space: bool = False,
+    cost_type="general",
+    state_version="v0",
+    info_leadtime: Optional[List[int]] = None,
+    shipment_leadtime: Optional[List[int]] = None,
+    target_levels=None,
+):
+    if agent_managed_facilities is None:
+        agent_managed_facilities = ["retailer", "wholesaler", "distributor", "manufacturer"]
+
+    if len(agent_managed_facilities) > 1 and not box_action_space:
+        raise ValueError(
+            "length of agent_managed_facilities >= 1, only box_action_space is allowed. Please specify" "box_action_space=True"
+        )
+
+    if info_leadtime is None:
+        info_leadtime = [2, 2, 2, 1]
+    if shipment_leadtime is None:
+        shipment_leadtime = [2, 2, 2, 2]
+
+    if target_levels is None:
+        target_levels = [529, 451, 437, 318]
+
+    demand_generator = Demand("negative_binomial", size=max_episode_steps, n=19.725931241214337, p=0.1580729217154675)
+
+    if state_version == "v0":
+        array_index = {
+            "on_hand": 0,
+            "unfilled_demand": 1,
+            "latest_demand": 2,
+            "unreceived_pipeline": [3, 4, 5, 6],
+        }
+        state_dim_per_facility = 7
+
+    elif state_version == "v1":
+        array_index = {
+            "on_hand": 0,
+            "unfilled_demand": 1,
+            "latest_demand": 2,
+            "on_order": 3,
+            "unreceived_pipeline": [4, 5, 6, 7],
+        }
+        state_dim_per_facility = 8
+    else:
+        raise ValueError
+
+    bsp_retailer = BaseStockPolicy(
+        target_levels=[target_levels[0]], array_index=array_index, state_dim_per_facility=state_dim_per_facility
+    )
+    bsp_wholesaler = BaseStockPolicy(
+        target_levels=[target_levels[1]], array_index=array_index, state_dim_per_facility=state_dim_per_facility
+    )
+    bsp_distributor = BaseStockPolicy(
+        target_levels=[target_levels[2]], array_index=array_index, state_dim_per_facility=state_dim_per_facility
+    )
+    bsp_manufacturer = BaseStockPolicy(
+        target_levels=[target_levels[3]], array_index=array_index, state_dim_per_facility=state_dim_per_facility
+    )
+
+    if random_init:
+        init_inventory = [0, 200]
+        init_shipments = [[0, 200]] * 4
+        init_sales_orders = [[0, 200]] * 4
+    else:
+        init_inventory = 100
+        init_shipments = [[100, 0]] * 4
+        init_sales_orders = [[100, 0]] * 4
+
+    retailer = Node(
+        name="retailer",
+        initial_inventory=init_inventory,
+        holding_cost=2.0,
+        backlog_cost=10,
+        fallback_policy=bsp_retailer,
+        is_demand_source=True,
+        demands=demand_generator,
+    )
+    wholesaler = Node(
+        name="wholesaler", initial_inventory=init_inventory, holding_cost=1.75, backlog_cost=0, fallback_policy=bsp_wholesaler
+    )
+    distributor = Node(
+        name="distributor", initial_inventory=init_inventory, holding_cost=1.5, backlog_cost=0, fallback_policy=bsp_distributor
+    )
+    manufacturer = Node(
+        name="manufacturer",
+        initial_inventory=init_inventory,
+        holding_cost=1.25,
+        backlog_cost=0,
+        fallback_policy=bsp_manufacturer,
+    )
+    supply_source = Node(name="external_supplier", is_external_supplier=True)
+    nodes = [retailer, wholesaler, distributor, manufacturer, supply_source]
+
+    arcs = [
+        Arc(
+            "external_supplier",
+            "manufacturer",
+            info_leadtime[3],
+            shipment_leadtime[3],
+            initial_shipments=init_shipments[0],
+            initial_sales_orders=init_sales_orders[0],
+            random_init=random_init,
+        ),
+        Arc(
+            "manufacturer",
+            "distributor",
+            info_leadtime[2],
+            shipment_leadtime[2],
+            initial_shipments=init_shipments[1],
+            initial_sales_orders=init_sales_orders[1],
+            random_init=random_init,
+        ),
+        Arc(
+            "distributor",
+            "wholesaler",
+            info_leadtime[1],
+            shipment_leadtime[1],
+            initial_shipments=init_shipments[2],
+            initial_sales_orders=init_sales_orders[2],
+            random_init=random_init,
+        ),
+        Arc(
+            "wholesaler",
+            "retailer",
+            info_leadtime[0],
+            shipment_leadtime[0],
+            initial_shipments=init_shipments[3],
+            initial_sales_orders=init_sales_orders[3],
+            random_init=random_init,
+        ),
+    ]
+
+    num_agent_managed_facilities = len(agent_managed_facilities)
+    sn = SupplyNetwork(
+        nodes=nodes,
+        arcs=arcs,
+        agent_managed_facilities=agent_managed_facilities,
+        cost_type=cost_type,
+        state_version=state_version,
+    )
+    if box_action_space:
+        action_space = gym.spaces.Box(0, 200, shape=(num_agent_managed_facilities,))
+    elif multi_discrete_action_space:
+        action_space = gym.spaces.MultiDiscrete([201] * num_agent_managed_facilities)
+    else:
+        action_space = gym.spaces.Discrete(201)
+
+    if global_observable:
+        observation_space = gym.spaces.Box(low=-np.inf, high=np.inf, shape=(state_dim_per_facility * len(sn.internal_nodes),))
+    else:
+        observation_space = gym.spaces.Box(
+            low=-np.inf, high=np.inf, shape=(state_dim_per_facility * num_agent_managed_facilities,)
+        )
+
+    return InventoryManagementEnvMultiPlayer(
+        sn,
+        max_episode_steps=max_episode_steps,
+        action_space=action_space,
+        observation_space=observation_space,
+        global_observable=global_observable,
+        return_dict=return_dict,
+    )
+
+
 def make_beer_game_normal_multi_facility(
     global_observable: bool = False,
     agent_managed_facilities=None,

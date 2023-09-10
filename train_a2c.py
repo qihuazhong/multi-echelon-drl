@@ -21,7 +21,7 @@ def main():
         "--action-space",
         type=str,
         default="discrete",
-        required=True,
+        required=False,
         help="Should be one of 'discrete', 'continuous'",
     )
 
@@ -57,7 +57,7 @@ def main():
         help="Should be one of 'Retailer', 'Wholesaler', 'Distributor', 'Manufacturer' or 'MultiFacility' (Centralized control)",
         choices=ROLES,
     )
-    parser.add_argument("--scenario", type=str, required=True, help="complex or basic")
+    parser.add_argument("--scenario", type=str, required=True, help="complex, basic or dunnhumby")
     # Read arguments from command line
     args = parser.parse_args()
 
@@ -73,6 +73,9 @@ def main():
     elif args.scenario == "complex":
         demand_type = "Uniform"
         action_range = [0, 16]
+    elif args.scenario == "dunnhumby":
+        demand_type = "Dunnhumby"
+        action_range = [0, 200]
     else:
         raise ValueError
 

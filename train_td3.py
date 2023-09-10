@@ -51,7 +51,7 @@ def main():
         help="Should be one of 'Retailer', 'Wholesaler', 'Distributor', 'Manufacturer' or 'MultiFacility' (Centralized control)",
         choices=ROLES,
     )
-    parser.add_argument("--scenario", type=str, required=True, help="complex or basic")
+    parser.add_argument("--scenario", type=str, required=True, help="complex, basic or dunnhumby")
     # Read arguments from command line
     args = parser.parse_args()
 
@@ -66,6 +66,10 @@ def main():
         benchmark_target_stock_level = [19, 20, 20, 14]
         demand_type = "Uniform"
         action_range = [0, 16]
+    elif args.scenario == "dunnhumby":
+        benchmark_target_stock_level = [529, 451, 437, 318]
+        demand_type = "Dunnhumby"
+        action_range = [0, 200]
     else:
         raise ValueError
 
@@ -133,9 +137,10 @@ def main():
             tensorboard_log=f"./tensorboard/",
             hge_rate=params["hge_rate_at_start"],
             heuristic=bsp,
+            learning_starts=50000,
         )
 
-        hge_callback = HgeRateCallback(mu_start=params["hge_rate_at_start"])
+        hge_callback = HgeRateCallback(mu_start=params["hge_rate_at_start"], action_noise_annealing=False)
         eval_callback = EvalCallback(
             env,
             callback_on_new_best=SaveEnvStatsCallback(env_save_path=f"./best_models/{exp_name}/"),
