@@ -21,14 +21,16 @@ class HgeRateCallback(BaseCallback):
     def on_step(self) -> bool:
         super().on_step()
 
+        action_dim = self.model.action_space.shape[0]
+
         self.model.hge_rate = self.mu_start - (self.mu_start - self.mu_end) * min(
             1.0, self.num_timesteps / 100 / self.decay_periods
         )
 
         if self.action_noise_annealing:
             self.model.action_noise = NormalActionNoise(
-                mean=np.zeros(4),
-                sigma=self.action_noise_std * (((10_000_000 - self.num_timesteps) / 10_000_000) ** 2) * np.ones(4),
+                mean=np.zeros(action_dim),
+                sigma=self.action_noise_std * (((10_000_000 - self.num_timesteps) / 10_000_000) ** 2) * np.ones(action_dim),
             )
 
         return self._on_step()
