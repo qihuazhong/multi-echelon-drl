@@ -1,34 +1,30 @@
 # Network configuration file
 # Define the nodes, arcs and their attributes in a supply network
-
 cost_type: clark_scarf
+#cost_type: general
 
 nodes:
   - name: retailer # name of the node_name
     agent_managed: True
-    holding_cost: 1
+    holding_cost: 1.0
     backlog_cost: 10
     # If a demand_path is given, the node_name would generate independent (i.e. receive external) demand
     demand:
-      distribution: RN # Rounded Normal distribution
+      distribution: Normal
       mean: 10
       sd: 2
-    target_stock_level: 48
   - name: wholesaler
     holding_cost: 0.75
     backlog_cost: 0
-    target_stock_level: 43
   - name: distributor
     holding_cost: 0.5
     backlog_cost: 0
-    target_stock_level: 41
   - name: manufacturer
     holding_cost: 0.25
     backlog_cost: 0
     # It is also possible to specify a fixed setup_cost. If omitted, it is defaulted to 0
     # The fixed (e.g. administrative, production setup) cost of placing an order, regardless of the quantity
     setup_cost: 0
-    target_stock_level: 30
   - name: external_supplier
     is_external_supplier: True
 

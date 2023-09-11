@@ -5,14 +5,22 @@ from stable_baselines3.common.noise import NormalActionNoise
 
 
 class HgeRateCallback(BaseCallback):
-    def __init__(self, verbose: int = 0, mu_start=0.5, mu_end=0.0, decay_periods: int = 1000, action_noise_annealing=False):
+    def __init__(
+        self,
+        verbose: int = 0,
+        mu_start=0.5,
+        mu_end=0.0,
+        decay_periods: int = 1000,
+        action_noise_std: float = 0.4,
+        action_noise_annealing=False,
+    ):
         super().__init__(verbose)
 
         self.mu_start = mu_start
         self.mu_end = mu_end
         self.decay_periods = decay_periods
 
-        self.action_noise_std = 0.4
+        self.action_noise_std = action_noise_std
         self.action_noise_annealing = action_noise_annealing
 
     def _on_step(self) -> bool:
@@ -21,7 +29,7 @@ class HgeRateCallback(BaseCallback):
     def on_step(self) -> bool:
         super().on_step()
 
-        action_dim = self.model.action_space.shape[0]
+        action_dim = self.model.action_space.shape[-1]
 
         self.model.hge_rate = self.mu_start - (self.mu_start - self.mu_end) * min(
             1.0, self.num_timesteps / 100 / self.decay_periods
