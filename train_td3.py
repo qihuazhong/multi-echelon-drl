@@ -140,7 +140,9 @@ def main():
             learning_starts=50000,
         )
 
-        hge_callback = HgeRateCallback(mu_start=params["hge_rate_at_start"], action_noise_annealing=False)
+        hge_callback = HgeRateCallback(
+            mu_start=params["hge_rate_at_start"], action_noise_std=params["action_noise_std"], action_noise_annealing=True
+        )
         eval_callback = EvalCallback(
             env,
             callback_on_new_best=SaveEnvStatsCallback(env_save_path=f"./best_models/{exp_name}/"),
