@@ -234,6 +234,17 @@ def register_envs():
     )
 
     gym.envs.register(
+        id="BeerGameDunnhumbyMultiFacilityFullInfo-v0",
+        entry_point=dunnhumby_env_factory(
+            role=["retailer", "wholesaler", "distributor", "manufacturer"],
+            discrete=False,
+            global_observable=True,
+            state_version="v0",
+        ),
+        max_episode_steps=100,
+    )
+
+    gym.envs.register(
         id="BeerGameDunnhumbyMultiFacilityFullInfo-v1",
         entry_point=dunnhumby_env_factory(
             role=["retailer", "wholesaler", "distributor", "manufacturer"],
