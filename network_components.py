@@ -17,9 +17,7 @@ class Order:
 
     """
 
-    def __init__(
-        self, order_quantity, shipped_quantity: float = 0, remaining_lead_time: int = 0, integer_order=False
-    ) -> None:
+    def __init__(self, order_quantity, shipped_quantity: float = 0, remaining_lead_time: int = 0, integer_order=False) -> None:
         if isinstance(order_quantity, (float, int, np.generic)):
             self.order_quantity = order_quantity
         elif isinstance(order_quantity, Demand):
@@ -94,9 +92,7 @@ class ShipmentList(list):
         shipment_quantity_by_time = []
 
         for t in range(1, self.history_len + 1):
-            shipment_quantity_by_time.append(
-                sum([shipment.quantity for shipment in self if shipment.time_till_arrival == t])
-            )
+            shipment_quantity_by_time.append(sum([shipment.quantity for shipment in self if shipment.time_till_arrival == t]))
 
         return shipment_quantity_by_time
 
@@ -117,8 +113,8 @@ class Arc:
         self,
         source: str,
         target: str,
-        information_leadtime,
-        shipment_leadtime,
+        information_leadtime: int,
+        shipment_leadtime: int,
         initial_shipments: Optional[List] = None,
         initial_sales_orders: Optional[List] = None,
         random_init=False,
@@ -145,8 +141,7 @@ class Arc:
             shipments = [0] * self.shipment_leadtime
         elif self.random_init:
             shipments = [
-                np.random.randint(self.initial_shipments[0], self.initial_shipments[1])
-                for t in range(self.shipment_leadtime)
+                np.random.randint(self.initial_shipments[0], self.initial_shipments[1]) for t in range(self.shipment_leadtime)
             ]
         else:
             shipments = self.initial_shipments[: self.shipment_leadtime]  # TODO check length
@@ -353,9 +348,7 @@ class Node:
             that is not fulfilled due to insufficient inventory
         """
         if self.is_demand_source:
-            quantity = max(
-                0, min(self.current_inventory, self.current_external_demand + self.unfilled_independent_demand)
-            )
+            quantity = max(0, min(self.current_inventory, self.current_external_demand + self.unfilled_independent_demand))
             # if quantity > 0:
             self.current_inventory -= quantity
 
