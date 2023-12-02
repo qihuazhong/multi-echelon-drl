@@ -54,7 +54,7 @@ class InventoryManagementEnvMultiPlayer(gym.Env):
         self.sn.reset()
         self.period = 0
 
-        self.sn.before_action(self.period)
+        self.sn.pre_agent_action()
 
         states: Union[np.ndarray, Dict[str, dict]]
         if self.global_observable:
@@ -77,7 +77,7 @@ class InventoryManagementEnvMultiPlayer(gym.Env):
             raise ValueError("Cannot take action when the state is terminal.")
 
         self.sn.agent_action(self.period, quantity)
-        self.sn.after_action(self.period)
+        self.sn.post_agent_action()
 
         cost = self.sn.get_cost()
 
@@ -85,9 +85,10 @@ class InventoryManagementEnvMultiPlayer(gym.Env):
 
         if self.period >= self.max_episode_steps:
             self.terminal = True
-            self.sn.before_action(self.period)
-        else:
-            self.sn.before_action(self.period)
+            # self.sn.before_action(self.period)
+        # else:
+
+        self.sn.pre_agent_action()
 
         states: Union[np.ndarray, Dict[str, dict]]
         if self.global_observable:
