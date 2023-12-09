@@ -6,7 +6,7 @@ import pandas as pd
 from stable_baselines3.common.base_class import BaseAlgorithm
 
 from utils.utils import ROLES
-from utils.wrappers import wrap_action_d_plus_a
+from utils.wrappers import wrap_action_d_plus_a, wrap_action_a
 from register_envs import register_envs
 
 import argparse
@@ -31,6 +31,7 @@ def main():
         required=True,
         help="Should be one of 'general', 'clark-scarf'",
     )
+    parser.add_argument("--state-version", type=str, default="v0", required=False)
 
     parser.add_argument("-m", "--models-dir", help="Path to directory the saved model(s)", required=True)
     parser.add_argument(
@@ -63,6 +64,9 @@ def main():
     elif args.scenario == "complex":
         demand_type = "Uniform"
         action_range = [0, 16]
+    elif args.scenario == "dunnhumby":
+        demand_type = "Dunnhumby"
+        action_range = [0, 200]
     else:
         raise ValueError
 
@@ -70,9 +74,9 @@ def main():
 
     # If td3, make the continuous environment, otherwise make the discrete environment
     if args.algo == "td3":
-        env_name = f"BeerGame{'CSCost'*(args.cost_type=='clark-scarf')}{demand_type}{args.role}{'FullInfo' * (args.info_scope=='global')}-v0"
+        env_name = f"BeerGame{'CSCost'*(args.cost_type=='clark-scarf')}{demand_type}{args.role}{'FullInfo' * (args.info_scope=='global')}-{args.state_version}"
     else:
-        env_name = f"BeerGame{'CSCost'*(args.cost_type=='clark-scarf')}{demand_type}{args.role}{'FullInfo' * (args.info_scope=='global')}Discrete-v0"
+        env_name = f"BeerGame{'CSCost'*(args.cost_type=='clark-scarf')}{demand_type}{args.role}{'FullInfo' * (args.info_scope=='global')}Discrete-{args.state_version}"
 
     def env_factory() -> gym.Env:
         if args.ordering_rule == "d+a":
@@ -83,7 +87,12 @@ def main():
                 ub=action_range[1],
             )
         elif args.ordering_rule == "a":
-            return gym.make(env_name)
+            return wrap_action_a(
+                gym.make(env_name),
+                offset=-(action_range[1] - action_range[0]) / 2,
+                lb=action_range[0],
+                ub=action_range[1],
+            )
         else:
             raise ValueError
 
@@ -137,7 +146,7 @@ def main():
 
     df = pd.DataFrame(results)
     df.to_csv(
-        f"./df_{args.algo}{args.role}{'_hge'*(args.hge=='hge')}.csv",
+        f"./df_{args.algo}{args.role}_{args.cost_type}{'_hge'*(args.hge=='hge')}{args.state_version}_.csv",
         index=False,
         mode="a",
     )
