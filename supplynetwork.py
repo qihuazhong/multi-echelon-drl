@@ -291,17 +291,6 @@ class SupplyNetwork:
                 self.nodes[supplier].latest_demand = []  # TODO
                 self.nodes[supplier].latest_demand.append(latest_demand)
 
-        # for node in self.order_sequence[: min(self.agent_indexes)]:
-        #
-        #     for supplier in self.suppliers[node]:
-        #         # TODO: need to send multiple arcs together in the multi-supplier setting
-        #
-        #         arc = self.arcs[(supplier, node)]
-        #         # arc.advance_order_slips()
-        #
-        #         states = self.get_state(node_name=node)
-        #         self.nodes[node].place_order(obs=states, arc=arc)
-
     def observations(self, agent: str):
         return self.get_state(agent)
 
