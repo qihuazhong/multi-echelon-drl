@@ -17,13 +17,29 @@ from stable_baselines3.common.vec_env import VecNormalize
 from stable_baselines3.common.evaluation import evaluate_policy
 from collections import namedtuple
 
-Result = namedtuple("Result", ["algo", "model_dir", "info_scope", "ordering_rule", "role", "scenario", "mean_rewards"])
+Result = namedtuple(
+    "Result",
+    [
+        "algo",
+        "model_dir",
+        "info_scope",
+        "ordering_rule",
+        "role",
+        "scenario",
+        "mean_rewards",
+    ],
+)
 
 
 def main():
     parser = argparse.ArgumentParser()
 
-    parser.add_argument("-a", "--algo", help="DRL algorithm of the agent. One of [td3, a2c, dqn]", required=True)
+    parser.add_argument(
+        "-a",
+        "--algo",
+        help="DRL algorithm of the agent. One of [td3, a2c, dqn]",
+        required=True,
+    )
 
     parser.add_argument(
         "--cost-type",
@@ -33,9 +49,16 @@ def main():
     )
     parser.add_argument("--state-version", type=str, default="v0", required=False)
 
-    parser.add_argument("-m", "--models-dir", help="Path to directory the saved model(s)", required=True)
     parser.add_argument(
-        "-n", "--n-eval-episodes", help="Number of episodes to evaluate per model", required=True, default=100, type=int
+        "-m", "--models-dir", help="Path to directory the saved model(s)", required=True
+    )
+    parser.add_argument(
+        "-n",
+        "--n-eval-episodes",
+        help="Number of episodes to evaluate per model",
+        required=True,
+        default=100,
+        type=int,
     )
     parser.add_argument(
         "-i",
@@ -53,7 +76,12 @@ def main():
         choices=ROLES,
     )
     parser.add_argument("--scenario", type=str, required=True, help="complex or basic")
-    parser.add_argument("--hge", type=str, default="nohge", help="Whether heuristic guided exploration is used")
+    parser.add_argument(
+        "--hge",
+        type=str,
+        default="nohge",
+        help="Whether heuristic guided exploration is used",
+    )
 
     # Read arguments from command line
     args = parser.parse_args()
@@ -107,14 +135,22 @@ def main():
         if experiment_prefix in sub_dir:
             rewards = []
             env = make_vec_env(env_factory, n_envs=1)
-            env = VecNormalize.load(f"{args.models_dir+'/best_models'}/{sub_dir}/best_env", env)
+            env = VecNormalize.load(
+                f"{args.models_dir+'/best_models'}/{sub_dir}/best_env", env
+            )
 
             # Check whether the training is complete
-            evaluation_log = np.load(f"{args.models_dir+'/logs'}/{sub_dir}/evaluations.npz")
+            evaluation_log = np.load(
+                f"{args.models_dir+'/logs'}/{sub_dir}/evaluations.npz"
+            )
             if evaluation_log["timesteps"].max() < 10_000_000:
-                print(f"Warning: Model {sub_dir} trained for {evaluation_log['timesteps'].max()} steps only")
+                print(
+                    f"Warning: Model {sub_dir} trained for {evaluation_log['timesteps'].max()} steps only"
+                )
 
-            model = algos[args.algo].load(f"{args.models_dir+'/best_models'}/{sub_dir}/best_model.zip", env=env)
+            model = algos[args.algo].load(
+                f"{args.models_dir+'/best_models'}/{sub_dir}/best_model.zip", env=env
+            )
 
             for i in range(args.n_eval_episodes):
                 np.random.seed(i)
@@ -137,7 +173,9 @@ def main():
                     mean_rewards=np.mean(rewards),
                 )
             )
-            print(f"\tModel: {sub_dir}: Mean reward:{np.mean(rewards)} over {len(rewards)} episodes")
+            print(
+                f"\tModel: {sub_dir}: Mean reward:{np.mean(rewards)} over {len(rewards)} episodes"
+            )
             mean_rewards.append(np.mean(rewards))
 
     print(
