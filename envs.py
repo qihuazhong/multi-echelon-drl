@@ -10,6 +10,8 @@ from network_components import Node, Arc
 import gym
 from gym.utils import seeding
 
+from utils.utils import get_state_name_to_index_mapping, get_state_len
+
 # print logging info to stdout
 logging.basicConfig(level=logging.WARNING, handlers=[logging.StreamHandler()])
 
@@ -58,12 +60,20 @@ class InventoryManagementEnvMultiPlayer(gym.Env):
 
         states: Union[np.ndarray, Dict[str, dict]]
         if self.global_observable:
-            states = {agent: self.sn.get_state(agent) for agent in self.sn.internal_nodes}
+            states = {
+                agent: self.sn.get_state(agent) for agent in self.sn.internal_nodes
+            }
         else:
-            states = {agent: self.sn.get_state(agent) for agent in self.sn.agent_managed_facilities}
+            states = {
+                agent: self.sn.get_state(agent)
+                for agent in self.sn.agent_managed_facilities
+            }
 
         if not self.return_dict:
-            states = np.array([list(state.values()) for agent, state in states.items()], dtype=np.float32).flatten()
+            states = np.array(
+                [list(state.values()) for agent, state in states.items()],
+                dtype=np.float32,
+            ).flatten()
 
         return states
 
@@ -92,12 +102,20 @@ class InventoryManagementEnvMultiPlayer(gym.Env):
 
         states: Union[np.ndarray, Dict[str, dict]]
         if self.global_observable:
-            states = {agent: self.sn.get_state(agent) for agent in self.sn.internal_nodes}
+            states = {
+                agent: self.sn.get_state(agent) for agent in self.sn.internal_nodes
+            }
         else:
-            states = {agent: self.sn.get_state(agent) for agent in self.sn.agent_managed_facilities}
+            states = {
+                agent: self.sn.get_state(agent)
+                for agent in self.sn.agent_managed_facilities
+            }
 
         if not self.return_dict:
-            states = np.array([list(state.values()) for agent, state in states.items()], dtype=np.float32).flatten()
+            states = np.array(
+                [list(state.values()) for agent, state in states.items()],
+                dtype=np.float32,
+            ).flatten()
 
         # return states, cost, self.terminal, self.terminal, {}
         return states, cost, self.terminal, {}
@@ -125,11 +143,17 @@ def make_beer_game_dunnhumby_multi_facility(
     target_levels=None,
 ):
     if agent_managed_facilities is None:
-        agent_managed_facilities = ["retailer", "wholesaler", "distributor", "manufacturer"]
+        agent_managed_facilities = [
+            "retailer",
+            "wholesaler",
+            "distributor",
+            "manufacturer",
+        ]
 
     if len(agent_managed_facilities) > 1 and not box_action_space:
         raise ValueError(
-            "length of agent_managed_facilities >= 1, only box_action_space is allowed. Please specify" "box_action_space=True"
+            "length of agent_managed_facilities >= 1, only box_action_space is allowed. Please specify"
+            "box_action_space=True"
         )
 
     if info_leadtime is None:
@@ -140,40 +164,35 @@ def make_beer_game_dunnhumby_multi_facility(
     if target_levels is None:
         target_levels = [529, 451, 437, 318]
 
-    demand_generator = Demand("negative_binomial", size=max_episode_steps, n=19.725931241214337, p=0.1580729217154675)
+    demand_generator = Demand(
+        "negative_binomial",
+        size=max_episode_steps,
+        n=19.725931241214337,
+        p=0.1580729217154675,
+    )
 
-    if state_version == "v0":
-        array_index = {
-            "on_hand": 0,
-            "unfilled_demand": 1,
-            "latest_demand": 2,
-            "unreceived_pipeline": [3, 4, 5, 6],
-        }
-        state_dim_per_facility = 7
-
-    elif state_version == "v1":
-        array_index = {
-            "on_hand": 0,
-            "unfilled_demand": 1,
-            "latest_demand": 2,
-            "on_order": 3,
-            "unreceived_pipeline": [4, 5, 6, 7],
-        }
-        state_dim_per_facility = 8
-    else:
-        raise ValueError
+    state_name_to_index = get_state_name_to_index_mapping(state_version)
+    state_dim_per_facility = get_state_len(state_name_to_index)
 
     bsp_retailer = BaseStockPolicy(
-        target_levels=[target_levels[0]], array_index=array_index, state_dim_per_facility=state_dim_per_facility
+        target_levels=[target_levels[0]],
+        state_name_to_index=state_name_to_index,
+        state_dim_per_facility=state_dim_per_facility,
     )
     bsp_wholesaler = BaseStockPolicy(
-        target_levels=[target_levels[1]], array_index=array_index, state_dim_per_facility=state_dim_per_facility
+        target_levels=[target_levels[1]],
+        state_name_to_index=state_name_to_index,
+        state_dim_per_facility=state_dim_per_facility,
     )
     bsp_distributor = BaseStockPolicy(
-        target_levels=[target_levels[2]], array_index=array_index, state_dim_per_facility=state_dim_per_facility
+        target_levels=[target_levels[2]],
+        state_name_to_index=state_name_to_index,
+        state_dim_per_facility=state_dim_per_facility,
     )
     bsp_manufacturer = BaseStockPolicy(
-        target_levels=[target_levels[3]], array_index=array_index, state_dim_per_facility=state_dim_per_facility
+        target_levels=[target_levels[3]],
+        state_name_to_index=state_name_to_index,
+        state_dim_per_facility=state_dim_per_facility,
     )
 
     if random_init:
@@ -195,10 +214,18 @@ def make_beer_game_dunnhumby_multi_facility(
         demands=demand_generator,
     )
     wholesaler = Node(
-        name="wholesaler", initial_inventory=init_inventory, holding_cost=1.75, backlog_cost=0, fallback_policy=bsp_wholesaler
+        name="wholesaler",
+        initial_inventory=init_inventory,
+        holding_cost=1.75,
+        backlog_cost=0,
+        fallback_policy=bsp_wholesaler,
     )
     distributor = Node(
-        name="distributor", initial_inventory=init_inventory, holding_cost=1.5, backlog_cost=0, fallback_policy=bsp_distributor
+        name="distributor",
+        initial_inventory=init_inventory,
+        holding_cost=1.5,
+        backlog_cost=0,
+        fallback_policy=bsp_distributor,
     )
     manufacturer = Node(
         name="manufacturer",
@@ -265,10 +292,16 @@ def make_beer_game_dunnhumby_multi_facility(
         action_space = gym.spaces.Discrete(201)
 
     if global_observable:
-        observation_space = gym.spaces.Box(low=-np.inf, high=np.inf, shape=(state_dim_per_facility * len(sn.internal_nodes),))
+        observation_space = gym.spaces.Box(
+            low=-np.inf,
+            high=np.inf,
+            shape=(state_dim_per_facility * len(sn.internal_nodes),),
+        )
     else:
         observation_space = gym.spaces.Box(
-            low=-np.inf, high=np.inf, shape=(state_dim_per_facility * num_agent_managed_facilities,)
+            low=-np.inf,
+            high=np.inf,
+            shape=(state_dim_per_facility * num_agent_managed_facilities,),
         )
 
     return InventoryManagementEnvMultiPlayer(
@@ -296,11 +329,17 @@ def make_beer_game_normal_multi_facility(
     target_levels=None,
 ):
     if agent_managed_facilities is None:
-        agent_managed_facilities = ["retailer", "wholesaler", "distributor", "manufacturer"]
+        agent_managed_facilities = [
+            "retailer",
+            "wholesaler",
+            "distributor",
+            "manufacturer",
+        ]
 
     if len(agent_managed_facilities) > 1 and not box_action_space:
         raise ValueError(
-            "length of agent_managed_facilities >= 1, only box_action_space is allowed. Please specify" "box_action_space=True"
+            "length of agent_managed_facilities >= 1, only box_action_space is allowed. Please specify"
+            "box_action_space=True"
         )
 
     if info_leadtime is None:
@@ -319,38 +358,28 @@ def make_beer_game_normal_multi_facility(
 
     demand_generator = Demand("normal", mean=10, sd=2, size=max_episode_steps)
 
-    if state_version == "v0":
-        array_index = {
-            "on_hand": 0,
-            "unfilled_demand": 1,
-            "latest_demand": 2,
-            "unreceived_pipeline": [3, 4, 5, 6],
-        }
-        state_dim_per_facility = 7
-
-    elif state_version == "v1":
-        array_index = {
-            "on_hand": 0,
-            "unfilled_demand": 1,
-            "latest_demand": 2,
-            "on_order": 3,
-            "unreceived_pipeline": [4, 5, 6, 7],
-        }
-        state_dim_per_facility = 8
-    else:
-        raise ValueError
+    state_name_to_index = get_state_name_to_index_mapping(state_version)
+    state_dim_per_facility = get_state_len(state_name_to_index)
 
     bsp_48 = BaseStockPolicy(
-        target_levels=[target_levels[0]], array_index=array_index, state_dim_per_facility=state_dim_per_facility
+        target_levels=[target_levels[0]],
+        state_name_to_index=state_name_to_index,
+        state_dim_per_facility=state_dim_per_facility,
     )
     bsp_43 = BaseStockPolicy(
-        target_levels=[target_levels[1]], array_index=array_index, state_dim_per_facility=state_dim_per_facility
+        target_levels=[target_levels[1]],
+        state_name_to_index=state_name_to_index,
+        state_dim_per_facility=state_dim_per_facility,
     )
     bsp_41 = BaseStockPolicy(
-        target_levels=[target_levels[2]], array_index=array_index, state_dim_per_facility=state_dim_per_facility
+        target_levels=[target_levels[2]],
+        state_name_to_index=state_name_to_index,
+        state_dim_per_facility=state_dim_per_facility,
     )
     bsp_30 = BaseStockPolicy(
-        target_levels=[target_levels[3]], array_index=array_index, state_dim_per_facility=state_dim_per_facility
+        target_levels=[target_levels[3]],
+        state_name_to_index=state_name_to_index,
+        state_dim_per_facility=state_dim_per_facility,
     )
 
     if random_init:
@@ -372,10 +401,18 @@ def make_beer_game_normal_multi_facility(
         demands=demand_generator,
     )
     wholesaler = Node(
-        name="wholesaler", initial_inventory=init_inventory, holding_cost=0.75, backlog_cost=0, fallback_policy=bsp_43
+        name="wholesaler",
+        initial_inventory=init_inventory,
+        holding_cost=0.75,
+        backlog_cost=0,
+        fallback_policy=bsp_43,
     )
     distributor = Node(
-        name="distributor", initial_inventory=init_inventory, holding_cost=0.5, backlog_cost=0, fallback_policy=bsp_41
+        name="distributor",
+        initial_inventory=init_inventory,
+        holding_cost=0.5,
+        backlog_cost=0,
+        fallback_policy=bsp_41,
     )
     manufacturer = Node(
         name="manufacturer",
@@ -442,10 +479,16 @@ def make_beer_game_normal_multi_facility(
         action_space = gym.spaces.Discrete(21)
 
     if global_observable:
-        observation_space = gym.spaces.Box(low=-np.inf, high=np.inf, shape=(state_dim_per_facility * len(sn.internal_nodes),))
+        observation_space = gym.spaces.Box(
+            low=-np.inf,
+            high=np.inf,
+            shape=(state_dim_per_facility * len(sn.internal_nodes),),
+        )
     else:
         observation_space = gym.spaces.Box(
-            low=-np.inf, high=np.inf, shape=(state_dim_per_facility * num_agent_managed_facilities,)
+            low=-np.inf,
+            high=np.inf,
+            shape=(state_dim_per_facility * num_agent_managed_facilities,),
         )
 
     return InventoryManagementEnvMultiPlayer(
@@ -472,7 +515,12 @@ def make_beer_game_uniform_multi_facility(
     shipment_leadtime: Optional[List[int]] = None,
 ):
     if agent_managed_facilities is None:
-        agent_managed_facilities = ["retailer", "wholesaler", "distributor", "manufacturer"]
+        agent_managed_facilities = [
+            "retailer",
+            "wholesaler",
+            "distributor",
+            "manufacturer",
+        ]
 
     # if len(agent_managed_facilities) > 1 and not box_action_space:
     #     raise ValueError(
@@ -485,30 +533,24 @@ def make_beer_game_uniform_multi_facility(
     if shipment_leadtime is None:
         shipment_leadtime = [2, 2, 2, 2]
 
-    if state_version == "v0":
-        array_index = {
-            "on_hand": 0,
-            "unfilled_demand": 1,
-            "latest_demand": 2,
-            "unreceived_pipeline": [3, 4, 5, 6],
-        }
-        state_dim_per_facility = 7
+    state_name_to_index = get_state_name_to_index_mapping(state_version)
+    state_dim_per_facility = get_state_len(state_name_to_index)
 
-    elif state_version == "v1":
-        array_index = {
-            "on_hand": 0,
-            "unfilled_demand": 1,
-            "latest_demand": 2,
-            "on_order": 3,
-            "unreceived_pipeline": [4, 5, 6, 7],
-        }
-        state_dim_per_facility = 8
-    else:
-        raise ValueError
-
-    bsp_19 = BaseStockPolicy(target_levels=[19], array_index=array_index, state_dim_per_facility=state_dim_per_facility)
-    bsp_20 = BaseStockPolicy(target_levels=[20], array_index=array_index, state_dim_per_facility=state_dim_per_facility)
-    bsp_14 = BaseStockPolicy(target_levels=[14], array_index=array_index, state_dim_per_facility=state_dim_per_facility)
+    bsp_19 = BaseStockPolicy(
+        target_levels=[19],
+        state_name_to_index=state_name_to_index,
+        state_dim_per_facility=state_dim_per_facility,
+    )
+    bsp_20 = BaseStockPolicy(
+        target_levels=[20],
+        state_name_to_index=state_name_to_index,
+        state_dim_per_facility=state_dim_per_facility,
+    )
+    bsp_14 = BaseStockPolicy(
+        target_levels=[14],
+        state_name_to_index=state_name_to_index,
+        state_dim_per_facility=state_dim_per_facility,
+    )
 
     if random_init:
         init_inventory = [0, 25]
@@ -529,10 +571,18 @@ def make_beer_game_uniform_multi_facility(
         demands=demand_generator,
     )
     wholesaler = Node(
-        name="wholesaler", initial_inventory=init_inventory, holding_cost=0.5, backlog_cost=1, fallback_policy=bsp_20
+        name="wholesaler",
+        initial_inventory=init_inventory,
+        holding_cost=0.5,
+        backlog_cost=1,
+        fallback_policy=bsp_20,
     )
     distributor = Node(
-        name="distributor", initial_inventory=init_inventory, holding_cost=0.5, backlog_cost=1, fallback_policy=bsp_20
+        name="distributor",
+        initial_inventory=init_inventory,
+        holding_cost=0.5,
+        backlog_cost=1,
+        fallback_policy=bsp_20,
     )
     manufacturer = Node(
         name="manufacturer",
@@ -600,10 +650,16 @@ def make_beer_game_uniform_multi_facility(
         action_space = gym.spaces.Discrete(17)
 
     if global_observable:
-        observation_space = gym.spaces.Box(low=-np.inf, high=np.inf, shape=(state_dim_per_facility * len(sn.internal_nodes),))
+        observation_space = gym.spaces.Box(
+            low=-np.inf,
+            high=np.inf,
+            shape=(state_dim_per_facility * len(sn.internal_nodes),),
+        )
     else:
         observation_space = gym.spaces.Box(
-            low=-np.inf, high=np.inf, shape=(state_dim_per_facility * num_agent_managed_facilities,)
+            low=-np.inf,
+            high=np.inf,
+            shape=(state_dim_per_facility * num_agent_managed_facilities,),
         )
 
     return InventoryManagementEnvMultiPlayer(
@@ -623,6 +679,7 @@ def make_beer_game(
     return_dict=False,
     random_init=False,
     seed=None,
+    state_version="v0",
 ) -> InventoryManagementEnvMultiPlayer:
     if agent_managed_facilities is None:
         agent_managed_facilities = ["retailer"]
@@ -643,8 +700,19 @@ def make_beer_game(
     else:
         raise ValueError()
 
-    bs_32 = BaseStockPolicy(32)
-    bs_24 = BaseStockPolicy(24)
+    state_name_to_index = get_state_name_to_index_mapping(state_version)
+    state_dim_per_facility = get_state_len(state_name_to_index)
+
+    bsp_32 = BaseStockPolicy(
+        target_levels=[32],
+        state_name_to_index=state_name_to_index,
+        state_dim_per_facility=state_dim_per_facility,
+    )
+    bsp_24 = BaseStockPolicy(
+        target_levels=[24],
+        state_name_to_index=state_name_to_index,
+        state_dim_per_facility=state_dim_per_facility,
+    )
 
     if random_init:
         init_inventory = [0, 25]
@@ -658,13 +726,19 @@ def make_beer_game(
     retailer = Node(
         name="retailer",
         initial_inventory=init_inventory,
-        fallback_policy=bs_32,
+        fallback_policy=bsp_32,
         is_demand_source=True,
         demands=demand_generator,
     )
-    wholesaler = Node(name="wholesaler", initial_inventory=init_inventory, fallback_policy=bs_32)
-    distributor = Node(name="distributor", initial_inventory=init_inventory, fallback_policy=bs_32)
-    manufacturer = Node(name="manufacturer", initial_inventory=init_inventory, fallback_policy=bs_24)
+    wholesaler = Node(
+        name="wholesaler", initial_inventory=init_inventory, fallback_policy=bsp_32
+    )
+    distributor = Node(
+        name="distributor", initial_inventory=init_inventory, fallback_policy=bsp_32
+    )
+    manufacturer = Node(
+        name="manufacturer", initial_inventory=init_inventory, fallback_policy=bsp_24
+    )
     supply_source = Node(name="external_supplier", is_external_supplier=True)
     nodes = [retailer, wholesaler, distributor, manufacturer, supply_source]
 
@@ -704,10 +778,16 @@ def make_beer_game(
     ]
 
     num_agent_managed_facilities = len(agent_managed_facilities)
-    sn = SupplyNetwork(nodes=nodes, arcs=arcs, agent_managed_facilities=agent_managed_facilities)
+    sn = SupplyNetwork(
+        nodes=nodes, arcs=arcs, agent_managed_facilities=agent_managed_facilities
+    )
 
     action_space = gym.spaces.MultiDiscrete([17] * num_agent_managed_facilities)
-    observation_space = gym.spaces.Box(low=-np.inf, high=np.inf, shape=(7 * num_agent_managed_facilities,))
+    observation_space = gym.spaces.Box(
+        low=-np.inf,
+        high=np.inf,
+        shape=(state_dim_per_facility * num_agent_managed_facilities,),
+    )
 
     return InventoryManagementEnvMultiPlayer(
         sn,

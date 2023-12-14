@@ -554,7 +554,7 @@ def from_dict(network_config: dict) -> SupplyNetwork:
 
             fallback_policy = BaseStockPolicy(
                 target_levels=[target_stock_level],
-                array_index=array_index,
+                state_name_to_index=array_index,
                 state_dim_per_facility=7,
                 ub=np.inf,
             )

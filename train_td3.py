@@ -35,7 +35,12 @@ def main():
         required=True,
         help="Should be one of 'local', 'global'. Whether to return global info of the entire supply chain in the decentralized setting. This argument is ignored in the centralized setting",
     )
-    parser.add_argument("-p", "--hyperparameters", help="Path to the experiment setup file (.yaml)", required=True)
+    parser.add_argument(
+        "-p",
+        "--hyperparameters",
+        help="Path to the experiment setup file (.yaml)",
+        required=True,
+    )
     parser.add_argument(
         "--name",
         help="Name of the experiment. Used as a prefix for saving log files and models to avoid "
@@ -51,7 +56,9 @@ def main():
         help="Should be one of 'Retailer', 'Wholesaler', 'Distributor', 'Manufacturer' or 'MultiFacility' (Centralized control)",
         choices=ROLES,
     )
-    parser.add_argument("--scenario", type=str, required=True, help="complex, basic or dunnhumby")
+    parser.add_argument(
+        "--scenario", type=str, required=True, help="complex, basic or dunnhumby"
+    )
     # Read arguments from command line
     args = parser.parse_args()
 
@@ -78,13 +85,20 @@ def main():
     print(params)
 
     if params["hge_rate_at_start"] > 0 and args.role != "MultiFacility":
-        raise NotImplementedError("For now the TD3 with HGE only supports centralized setting")
+        raise NotImplementedError(
+            "For now the TD3 with HGE only supports centralized setting"
+        )
 
     env_name = f"BeerGame{'CSCost' * (args.cost_type == 'clark-scarf')}{demand_type}{args.role}{'FullInfo' * (args.info_scope == 'global')}-{args.state_version}"
 
     bsp = BaseStockPolicy(
         target_levels=benchmark_target_stock_level,
-        array_index={"on_hand": 0, "unreceived_pipeline": [3, 4, 5, 6], "unfilled_demand": 1, "latest_demand": 2},
+        state_name_to_index={
+            "on_hand": 0,
+            "unreceived_pipeline": [3, 4, 5, 6],
+            "unfilled_demand": 1,
+            "latest_demand": 2,
+        },
         state_dim_per_facility=7,
         lb=action_range[0],
         ub=action_range[1],
@@ -116,13 +130,20 @@ def main():
 
     for run in range(setup["runs"]):
         exp_name = f"{args.name}_TD3_{args.role}_{args.scenario}{'_CSCost'*(args.cost_type=='clark-scarf')}{'_FullInfo'*(args.info_scope=='global')}{'_hge'*(params['hge_rate_at_start']>0)}_{args.ordering_rule}_{args.state_version}_{run}_{time.time_ns()}"
-        env = VecNormalize(make_vec_env(env_factory, n_env, vec_env_cls=SubprocVecEnv), clip_obs=100, clip_reward=1000)
+        env = VecNormalize(
+            make_vec_env(env_factory, n_env, vec_env_cls=SubprocVecEnv),
+            clip_obs=100,
+            clip_reward=1000,
+        )
         # eval_env = VecNormalize(make_vec_env(env_factory, n_env), clip_obs=100, clip_reward=1000)
 
         policy_kwargs = dict(net_arch=[params["network_width"]] * params["num_layers"])
 
         n_actions = env.action_space.shape[-1]
-        action_noise = NormalActionNoise(mean=np.zeros(n_actions), sigma=params["action_noise_std"] * np.ones(n_actions))
+        action_noise = NormalActionNoise(
+            mean=np.zeros(n_actions),
+            sigma=params["action_noise_std"] * np.ones(n_actions),
+        )
         model = HgeTD3(
             "MlpPolicy",
             env,
@@ -141,11 +162,15 @@ def main():
         )
 
         hge_callback = HgeRateCallback(
-            mu_start=params["hge_rate_at_start"], action_noise_std=params["action_noise_std"], action_noise_annealing=True
+            mu_start=params["hge_rate_at_start"],
+            action_noise_std=params["action_noise_std"],
+            action_noise_annealing=True,
         )
         eval_callback = EvalCallback(
             env,
-            callback_on_new_best=SaveEnvStatsCallback(env_save_path=f"./best_models/{exp_name}/"),
+            callback_on_new_best=SaveEnvStatsCallback(
+                env_save_path=f"./best_models/{exp_name}/"
+            ),
             best_model_save_path=f"./best_models/{exp_name}/",
             log_path=f"./logs/{exp_name}/",
             eval_freq=5000,
