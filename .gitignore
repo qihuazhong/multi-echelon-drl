@@ -9,6 +9,7 @@ __pycache__/
 best_models/
 logs/
 tensorboard/
+evaluation_outputs/
 *.DS_Store
 
 tests/*.ipynb

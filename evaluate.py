@@ -184,7 +184,7 @@ def main():
 
     df = pd.DataFrame(results)
     df.to_csv(
-        f"./df_{args.algo}{args.role}_{args.cost_type}{'_hge'*(args.hge=='hge')}{args.state_version}_.csv",
+        f"./evaluation_outputs/df_{args.algo}{args.role}_{args.cost_type}{'_hge'*(args.hge=='hge')}{args.state_version}_.csv",
         index=False,
         mode="a",
     )
