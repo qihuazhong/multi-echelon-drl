@@ -135,6 +135,7 @@ def make_beer_game_dunnhumby_multi_facility(
     return_dict: bool = False,
     random_init: bool = False,
     box_action_space: bool = False,
+    action_dim=201,
     multi_discrete_action_space: bool = False,
     cost_type="general",
     state_version="v0",
@@ -287,9 +288,11 @@ def make_beer_game_dunnhumby_multi_facility(
     if box_action_space:
         action_space = gym.spaces.Box(0, 200, shape=(num_agent_managed_facilities,))
     elif multi_discrete_action_space:
-        action_space = gym.spaces.MultiDiscrete([201] * num_agent_managed_facilities)
+        action_space = gym.spaces.MultiDiscrete(
+            [action_dim] * num_agent_managed_facilities
+        )
     else:
-        action_space = gym.spaces.Discrete(201)
+        action_space = gym.spaces.Discrete(action_dim)
 
     if global_observable:
         observation_space = gym.spaces.Box(

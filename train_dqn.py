@@ -32,7 +32,12 @@ def main():
         required=True,
         help="Should be one of 'local', 'global'. Whether to return global info of the entire supply chain in the decentralized setting. This argument is ignored in the centralized setting",
     )
-    parser.add_argument("-p", "--hyperparameters", help="Path to the experiment setup file (.yaml)", required=True)
+    parser.add_argument(
+        "-p",
+        "--hyperparameters",
+        help="Path to the experiment setup file (.yaml)",
+        required=True,
+    )
     parser.add_argument(
         "--name",
         help="Name of the experiment. Used as a prefix for saving log files and models to avoid "
@@ -48,7 +53,9 @@ def main():
         help="Should be one of 'Retailer', 'Wholesaler', 'Distributor', 'Manufacturer' or 'MultiFacility' (Centralized control)",
         choices=ROLES,
     )
-    parser.add_argument("--scenario", type=str, required=True, help="complex, basic or dunnhumby")
+    parser.add_argument(
+        "--scenario", type=str, required=True, help="complex, basic or dunnhumby"
+    )
 
     # Read arguments from command line
     args = parser.parse_args()
@@ -57,8 +64,11 @@ def main():
         setup = yaml.load(fh, Loader=yaml.FullLoader)
 
     if args.role == "MultiFacility":
-        raise NotImplementedError("For now the implemented DQN only supports the decentralized setting")
+        raise NotImplementedError(
+            "For now the implemented DQN only supports the decentralized setting"
+        )
 
+    action_multiplier = 1
     if args.scenario == "basic":
         demand_type = "Normal"
         action_range = [0, 20]
@@ -68,6 +78,10 @@ def main():
     elif args.scenario == "dunnhumby":
         demand_type = "Dunnhumby"
         action_range = [0, 200]
+    elif args.scenario == "dunnhumby21":
+        demand_type = "Dunnhumby"
+        action_range = [0, 200]
+        action_multiplier = 10
     else:
         raise ValueError
 
@@ -85,6 +99,7 @@ def main():
             return wrap_action_d_plus_a(
                 gym.make(env_name),
                 offset=-(action_range[1] - action_range[0]) / 2,
+                action_multiplier=action_multiplier,
                 lb=action_range[0],
                 ub=action_range[1],
             )
@@ -93,6 +108,7 @@ def main():
             return wrap_action_a(
                 gym.make(env_name),
                 offset=-(action_range[1] - action_range[0]) / 2,
+                action_multiplier=action_multiplier,
                 lb=action_range[0],
                 ub=action_range[1],
             )
@@ -100,9 +116,12 @@ def main():
             raise ValueError
 
     for run in range(setup["runs"]):
-
         exp_name = f"{args.name}_DQN_{args.role}_{args.scenario}{'_CSCost'*(args.cost_type=='clark-scarf')}{'_FullInfo'*(args.info_scope=='global')}_{args.ordering_rule}_{args.state_version}_{run}_{time.time_ns()}"
-        env = VecNormalize(make_vec_env(env_factory, n_env, vec_env_cls=SubprocVecEnv), clip_obs=100, clip_reward=1000)
+        env = VecNormalize(
+            make_vec_env(env_factory, n_env, vec_env_cls=SubprocVecEnv),
+            clip_obs=100,
+            clip_reward=1000,
+        )
         # env = VecNormalize(make_vec_env(env_factory, n_env), clip_obs=100, clip_reward=1000)
 
         policy_kwargs = dict(net_arch=[params["network_width"]] * params["num_layers"])
@@ -125,7 +144,9 @@ def main():
 
         eval_callback = EvalCallback(
             env,
-            callback_on_new_best=SaveEnvStatsCallback(env_save_path=f"./best_models/{exp_name}/"),
+            callback_on_new_best=SaveEnvStatsCallback(
+                env_save_path=f"./best_models/{exp_name}/"
+            ),
             best_model_save_path=f"./best_models/{exp_name}/",
             log_path=f"./logs/{exp_name}/",
             eval_freq=5000,

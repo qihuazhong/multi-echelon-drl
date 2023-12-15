@@ -70,12 +70,14 @@ def dunnhumby_env_factory(
     global_observable: bool,
     multi_discrete_action_space=False,
     state_version="v0",
+    action_dim=201,
 ):
     def func():
         # TODO
         env = make_beer_game_dunnhumby_multi_facility(
             agent_managed_facilities=role,
             box_action_space=not discrete,
+            action_dim=action_dim,
             multi_discrete_action_space=multi_discrete_action_space,
             random_init=True,
             global_observable=global_observable,
@@ -608,6 +610,54 @@ def register_envs():
                 discrete=True,
                 global_observable=True,
                 state_version="v1",
+            ),
+            max_episode_steps=100,
+        )
+
+        gym.envs.register(
+            id=f"BeerGameDunnhumby21{key}-v1",
+            entry_point=dunnhumby_env_factory(
+                role=role,
+                discrete=False,
+                global_observable=False,
+                state_version="v1",
+                action_dim=21,
+            ),
+            max_episode_steps=100,
+        )
+
+        gym.envs.register(
+            id=f"BeerGameDunnhumby21{key}Discrete-v1",
+            entry_point=dunnhumby_env_factory(
+                role=role,
+                discrete=True,
+                global_observable=False,
+                state_version="v1",
+                action_dim=21,
+            ),
+            max_episode_steps=100,
+        )
+
+        gym.envs.register(
+            id=f"BeerGameDunnhumby21{key}FullInfo-v1",
+            entry_point=dunnhumby_env_factory(
+                role=role,
+                discrete=False,
+                global_observable=True,
+                state_version="v1",
+                action_dim=21,
+            ),
+            max_episode_steps=100,
+        )
+
+        gym.envs.register(
+            id=f"BeerGameDunnhumby21{key}FullInfoDiscrete-v1",
+            entry_point=dunnhumby_env_factory(
+                role=role,
+                discrete=True,
+                global_observable=True,
+                state_version="v1",
+                action_dim=21,
             ),
             max_episode_steps=100,
         )
