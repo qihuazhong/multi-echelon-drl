@@ -3,9 +3,7 @@ import types
 import numpy as np
 
 
-def wrap_action_d_plus_a(
-    env, offset=-8, action_multiplier: int = 1, lb: int = 0, ub: int = 16
-):
+def wrap_action_d_plus_a(env, offset=-8, action_multiplier: int = 1, lb: int = 0, ub: int = 16):
     """A wrapper function that modify the step() function of the given environment.
 
     After wrapping the environment, the action values provided to the step() function will be interpreted as the 'a' in
@@ -23,14 +21,8 @@ def wrap_action_d_plus_a(
     env.wrappee_step = env.step
 
     def wrapped_step(self, action):
-        states = [
-            self.sn.get_state(facility) for facility in self.sn.agent_managed_facilities
-        ]
-        modified_action = (
-            np.array([state["latest_demand"] for state in states])
-            + action * action_multiplier
-            + offset
-        )
+        states = [self.unwrapped.sn.get_state(facility) for facility in self.unwrapped.sn.agent_managed_facilities]
+        modified_action = np.array([state["latest_demand"] for state in states]) + action * action_multiplier + offset
 
         return self.wrappee_step(np.clip(modified_action, lb, ub))
 
@@ -39,9 +31,7 @@ def wrap_action_d_plus_a(
     return env
 
 
-def wrap_action_a(
-    env, offset=-8, action_multiplier: int = 1, lb: int = 0, ub: int = 16
-):
+def wrap_action_a(env, offset=-8, action_multiplier: int = 1, lb: int = 0, ub: int = 16):
     """A wrapper function that modify the step() function of the given environment.
 
     After wrapping the environment, the action values provided to the step() function will be interpreted as the 'a' in
@@ -59,9 +49,7 @@ def wrap_action_a(
     env.wrappee_step = env.step
 
     def wrapped_step(self, action):
-        states = [
-            self.sn.get_state(facility) for facility in self.sn.agent_managed_facilities
-        ]
+        states = [self.unwrapped.sn.get_state(facility) for facility in self.unwrapped.sn.agent_managed_facilities]
         # modified_action = np.array([state['latest_demand'] for state in states]) + action + offset
         modified_action = np.array(action * action_multiplier).reshape(-1)
         return self.wrappee_step(np.clip(modified_action, lb, ub))

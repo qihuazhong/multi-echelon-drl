@@ -4,7 +4,7 @@ from utils.wrappers import wrap_action_d_plus_a, wrap_action_a
 from register_envs import register_envs
 from utils.callbacks import SaveEnvStatsCallback, HParamCallback
 from utils.utils import ROLES
-import gym
+import gymnasium as gym
 from stable_baselines3 import DQN
 from stable_baselines3.common.env_util import make_vec_env
 from stable_baselines3.common.vec_env import VecNormalize, SubprocVecEnv
@@ -53,9 +53,7 @@ def main():
         help="Should be one of 'Retailer', 'Wholesaler', 'Distributor', 'Manufacturer' or 'MultiFacility' (Centralized control)",
         choices=ROLES,
     )
-    parser.add_argument(
-        "--scenario", type=str, required=True, help="complex, basic or dunnhumby"
-    )
+    parser.add_argument("--scenario", type=str, required=True, help="complex, basic or dunnhumby")
 
     # Read arguments from command line
     args = parser.parse_args()
@@ -64,9 +62,7 @@ def main():
         setup = yaml.load(fh, Loader=yaml.FullLoader)
 
     if args.role == "MultiFacility":
-        raise NotImplementedError(
-            "For now the implemented DQN only supports the decentralized setting"
-        )
+        raise NotImplementedError("For now the implemented DQN only supports the decentralized setting")
 
     action_multiplier = 1
     if args.scenario == "basic":
@@ -144,9 +140,7 @@ def main():
 
         eval_callback = EvalCallback(
             env,
-            callback_on_new_best=SaveEnvStatsCallback(
-                env_save_path=f"./best_models/{exp_name}/"
-            ),
+            callback_on_new_best=SaveEnvStatsCallback(env_save_path=f"./best_models/{exp_name}/"),
             best_model_save_path=f"./best_models/{exp_name}/",
             log_path=f"./logs/{exp_name}/",
             eval_freq=5000,

@@ -7,7 +7,7 @@ from utils.utils import ROLES
 from register_envs import register_envs
 from hge import HgeTD3
 from utils.callbacks import HgeRateCallback, SaveEnvStatsCallback, HParamCallback
-import gym
+import gymnasium as gym
 from stable_baselines3.common.env_util import make_vec_env
 from stable_baselines3.common.vec_env import VecNormalize, SubprocVecEnv
 from stable_baselines3.common.noise import NormalActionNoise
@@ -56,9 +56,7 @@ def main():
         help="Should be one of 'Retailer', 'Wholesaler', 'Distributor', 'Manufacturer' or 'MultiFacility' (Centralized control)",
         choices=ROLES,
     )
-    parser.add_argument(
-        "--scenario", type=str, required=True, help="complex, basic or dunnhumby"
-    )
+    parser.add_argument("--scenario", type=str, required=True, help="complex, basic or dunnhumby")
     # Read arguments from command line
     args = parser.parse_args()
 
@@ -85,9 +83,7 @@ def main():
     print(params)
 
     if params["hge_rate_at_start"] > 0 and args.role != "MultiFacility":
-        raise NotImplementedError(
-            "For now the TD3 with HGE only supports centralized setting"
-        )
+        raise NotImplementedError("For now the TD3 with HGE only supports centralized setting")
 
     env_name = f"BeerGame{'CSCost' * (args.cost_type == 'clark-scarf')}{demand_type}{args.role}{'FullInfo' * (args.info_scope == 'global')}-{args.state_version}"
 
@@ -168,9 +164,7 @@ def main():
         )
         eval_callback = EvalCallback(
             env,
-            callback_on_new_best=SaveEnvStatsCallback(
-                env_save_path=f"./best_models/{exp_name}/"
-            ),
+            callback_on_new_best=SaveEnvStatsCallback(env_save_path=f"./best_models/{exp_name}/"),
             best_model_save_path=f"./best_models/{exp_name}/",
             log_path=f"./logs/{exp_name}/",
             eval_freq=5000,
