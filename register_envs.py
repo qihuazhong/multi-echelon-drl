@@ -1,5 +1,5 @@
 from typing import List
-import gym
+import gymnasium as gym
 from envs import (
     make_beer_game_uniform_multi_facility,
     make_beer_game_normal_multi_facility,
@@ -26,9 +26,7 @@ def uniform_multi_facility_dplusa_env_factory():
 
 # For td3 hyperparameters tuning
 def uniform_single_facility_retailer_dplusa_env_factory():
-    env = make_beer_game_uniform_multi_facility(
-        agent_managed_facilities=["retailer"], box_action_space=True, random_init=True
-    )
+    env = make_beer_game_uniform_multi_facility(agent_managed_facilities=["retailer"], box_action_space=True, random_init=True)
     env = wrap_action_d_plus_a(env, offset=-8, lb=0, ub=16)
     return env
 
@@ -300,40 +298,30 @@ def register_envs():
         # uniform (complex scenario)
         gym.envs.register(
             id=f"BeerGameUniform{key}-v0",
-            entry_point=uniform_env_factory(
-                role=role, discrete=False, global_observable=False
-            ),
+            entry_point=uniform_env_factory(role=role, discrete=False, global_observable=False),
             max_episode_steps=100,
         )
 
         gym.envs.register(
             id=f"BeerGameUniform{key}-v1",
-            entry_point=uniform_env_factory(
-                role=role, discrete=False, global_observable=False, state_version="v1"
-            ),
+            entry_point=uniform_env_factory(role=role, discrete=False, global_observable=False, state_version="v1"),
             max_episode_steps=100,
         )
 
         gym.envs.register(
             id=f"BeerGameUniform{key}Discrete-v0",
-            entry_point=uniform_env_factory(
-                role=role, discrete=True, global_observable=False
-            ),
+            entry_point=uniform_env_factory(role=role, discrete=True, global_observable=False),
             max_episode_steps=100,
         )
         gym.envs.register(
             id=f"BeerGameUniform{key}Discrete-v1",
-            entry_point=uniform_env_factory(
-                role=role, discrete=True, global_observable=False, state_version="v1"
-            ),
+            entry_point=uniform_env_factory(role=role, discrete=True, global_observable=False, state_version="v1"),
             max_episode_steps=100,
         )
 
         gym.envs.register(
             id=f"BeerGameUniform{key}FullInfo-v0",
-            entry_point=uniform_env_factory(
-                role=role, discrete=False, global_observable=True
-            ),
+            entry_point=uniform_env_factory(role=role, discrete=False, global_observable=True),
             max_episode_steps=100,
         )
         gym.envs.register(
@@ -349,9 +337,7 @@ def register_envs():
 
         gym.envs.register(
             id=f"BeerGameUniform{key}FullInfoDiscrete-v0",
-            entry_point=uniform_env_factory(
-                role=role, discrete=True, global_observable=True
-            ),
+            entry_point=uniform_env_factory(role=role, discrete=True, global_observable=True),
             max_episode_steps=100,
         )
 
@@ -578,17 +564,13 @@ def register_envs():
         # Dunnhumby
         gym.envs.register(
             id=f"BeerGameDunnhumby{key}-v1",
-            entry_point=dunnhumby_env_factory(
-                role=role, discrete=False, global_observable=False, state_version="v1"
-            ),
+            entry_point=dunnhumby_env_factory(role=role, discrete=False, global_observable=False, state_version="v1"),
             max_episode_steps=100,
         )
 
         gym.envs.register(
             id=f"BeerGameDunnhumby{key}Discrete-v1",
-            entry_point=dunnhumby_env_factory(
-                role=role, discrete=True, global_observable=False, state_version="v1"
-            ),
+            entry_point=dunnhumby_env_factory(role=role, discrete=True, global_observable=False, state_version="v1"),
             max_episode_steps=100,
         )
 

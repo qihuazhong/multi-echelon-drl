@@ -7,8 +7,8 @@ from utils.demands import Demand
 from utils.heuristics import BaseStockPolicy
 from supplynetwork import SupplyNetwork
 from network_components import Node, Arc
-import gym
-from gym.utils import seeding
+import gymnasium as gym
+from gymnasium.utils import seeding
 
 from utils.utils import get_state_name_to_index_mapping, get_state_len
 
@@ -51,7 +51,10 @@ class InventoryManagementEnvMultiPlayer(gym.Env):
 
         self.seed()
 
-    def reset(self) -> Union[np.ndarray, dict]:
+    def reset(
+        self,
+        seed: int | None = None,
+    ) -> Tuple[Union[np.ndarray, dict], dict]:
         self.terminal = False
         self.sn.reset()
         self.period = 0
@@ -60,14 +63,9 @@ class InventoryManagementEnvMultiPlayer(gym.Env):
 
         states: Union[np.ndarray, Dict[str, dict]]
         if self.global_observable:
-            states = {
-                agent: self.sn.get_state(agent) for agent in self.sn.internal_nodes
-            }
+            states = {agent: self.sn.get_state(agent) for agent in self.sn.internal_nodes}
         else:
-            states = {
-                agent: self.sn.get_state(agent)
-                for agent in self.sn.agent_managed_facilities
-            }
+            states = {agent: self.sn.get_state(agent) for agent in self.sn.agent_managed_facilities}
 
         if not self.return_dict:
             states = np.array(
@@ -75,9 +73,9 @@ class InventoryManagementEnvMultiPlayer(gym.Env):
                 dtype=np.float32,
             ).flatten()
 
-        return states
+        return states, {}
 
-    def step(self, quantity) -> Tuple[Union[ndarray, List[dict]], float, bool, dict]:
+    def step(self, quantity) -> Tuple[Union[ndarray, List[dict]], float, bool, bool, dict]:
         """
         return:
             a tuple of state (dict), cost (float), terminal (bool) and info (dict)
@@ -102,14 +100,9 @@ class InventoryManagementEnvMultiPlayer(gym.Env):
 
         states: Union[np.ndarray, Dict[str, dict]]
         if self.global_observable:
-            states = {
-                agent: self.sn.get_state(agent) for agent in self.sn.internal_nodes
-            }
+            states = {agent: self.sn.get_state(agent) for agent in self.sn.internal_nodes}
         else:
-            states = {
-                agent: self.sn.get_state(agent)
-                for agent in self.sn.agent_managed_facilities
-            }
+            states = {agent: self.sn.get_state(agent) for agent in self.sn.agent_managed_facilities}
 
         if not self.return_dict:
             states = np.array(
@@ -117,8 +110,8 @@ class InventoryManagementEnvMultiPlayer(gym.Env):
                 dtype=np.float32,
             ).flatten()
 
-        # return states, cost, self.terminal, self.terminal, {}
-        return states, cost, self.terminal, {}
+        return states, cost, self.terminal, self.terminal, {}
+        # return states, cost, self.terminal, {}
 
     def seed(self, seed=None):
         self.np_random, seed = seeding.np_random(seed)
@@ -153,8 +146,7 @@ def make_beer_game_dunnhumby_multi_facility(
 
     if len(agent_managed_facilities) > 1 and not box_action_space:
         raise ValueError(
-            "length of agent_managed_facilities >= 1, only box_action_space is allowed. Please specify"
-            "box_action_space=True"
+            "length of agent_managed_facilities >= 1, only box_action_space is allowed. Please specify" "box_action_space=True"
         )
 
     if info_leadtime is None:
@@ -288,9 +280,7 @@ def make_beer_game_dunnhumby_multi_facility(
     if box_action_space:
         action_space = gym.spaces.Box(0, 200, shape=(num_agent_managed_facilities,))
     elif multi_discrete_action_space:
-        action_space = gym.spaces.MultiDiscrete(
-            [action_dim] * num_agent_managed_facilities
-        )
+        action_space = gym.spaces.MultiDiscrete([action_dim] * num_agent_managed_facilities)
     else:
         action_space = gym.spaces.Discrete(action_dim)
 
@@ -341,8 +331,7 @@ def make_beer_game_normal_multi_facility(
 
     if len(agent_managed_facilities) > 1 and not box_action_space:
         raise ValueError(
-            "length of agent_managed_facilities >= 1, only box_action_space is allowed. Please specify"
-            "box_action_space=True"
+            "length of agent_managed_facilities >= 1, only box_action_space is allowed. Please specify" "box_action_space=True"
         )
 
     if info_leadtime is None:
@@ -733,15 +722,9 @@ def make_beer_game(
         is_demand_source=True,
         demands=demand_generator,
     )
-    wholesaler = Node(
-        name="wholesaler", initial_inventory=init_inventory, fallback_policy=bsp_32
-    )
-    distributor = Node(
-        name="distributor", initial_inventory=init_inventory, fallback_policy=bsp_32
-    )
-    manufacturer = Node(
-        name="manufacturer", initial_inventory=init_inventory, fallback_policy=bsp_24
-    )
+    wholesaler = Node(name="wholesaler", initial_inventory=init_inventory, fallback_policy=bsp_32)
+    distributor = Node(name="distributor", initial_inventory=init_inventory, fallback_policy=bsp_32)
+    manufacturer = Node(name="manufacturer", initial_inventory=init_inventory, fallback_policy=bsp_24)
     supply_source = Node(name="external_supplier", is_external_supplier=True)
     nodes = [retailer, wholesaler, distributor, manufacturer, supply_source]
 
@@ -781,9 +764,7 @@ def make_beer_game(
     ]
 
     num_agent_managed_facilities = len(agent_managed_facilities)
-    sn = SupplyNetwork(
-        nodes=nodes, arcs=arcs, agent_managed_facilities=agent_managed_facilities
-    )
+    sn = SupplyNetwork(nodes=nodes, arcs=arcs, agent_managed_facilities=agent_managed_facilities)
 
     action_space = gym.spaces.MultiDiscrete([17] * num_agent_managed_facilities)
     observation_space = gym.spaces.Box(

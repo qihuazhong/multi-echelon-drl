@@ -17,7 +17,7 @@ sys.path.append(os.path.abspath(os.path.join("..")) + "/snim")
 # from policies import BaseStockPolicy
 from utils.heuristics import BaseStockPolicy, InventoryPolicy
 
-import gym
+import gymnasium as gym
 from stable_baselines3 import DQN, PPO, TD3, A2C
 from stable_baselines3.common.noise import NormalActionNoise, ActionNoise
 from stable_baselines3.common.callbacks import BaseCallback
