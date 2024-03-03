@@ -54,8 +54,8 @@ class InventoryManagementEnvMultiPlayer(gym.Env):
     def reset(
         self,
         *,
-        seed: int | None = None,
-        options: dict[str, Any] | None = None,
+        seed: Optional[int] = None,
+        options: Optional[dict[str, Any]] = None,
     ) -> Tuple[Union[np.ndarray, dict], dict]:
         self.terminal = False
         self.sn.reset()
