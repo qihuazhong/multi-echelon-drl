@@ -1,5 +1,5 @@
 import logging
-from typing import Union, Tuple, List, Dict, Optional
+from typing import Union, Tuple, List, Dict, Optional, Any
 import numpy as np
 from numpy import ndarray
 
@@ -53,7 +53,9 @@ class InventoryManagementEnvMultiPlayer(gym.Env):
 
     def reset(
         self,
+        *,
         seed: int | None = None,
+        options: dict[str, Any] | None = None,
     ) -> Tuple[Union[np.ndarray, dict], dict]:
         self.terminal = False
         self.sn.reset()
