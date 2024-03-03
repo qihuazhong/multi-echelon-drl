@@ -1,7 +1,7 @@
 import numpy as np
 from stable_baselines3.common.callbacks import BaseCallback
 from stable_baselines3.common.logger import HParam
-from stable_baselines3.common.noise import NormalActionNoise
+from stable_baselines3.common.noise import NormalActionNoise, VectorizedActionNoise
 
 
 class HgeRateCallback(BaseCallback):
@@ -36,10 +36,21 @@ class HgeRateCallback(BaseCallback):
         )
 
         if self.action_noise_annealing:
-            self.model.action_noise = NormalActionNoise(
-                mean=np.zeros(action_dim),
-                sigma=self.action_noise_std * (((10_000_000 - self.num_timesteps) / 10_000_000) ** 2) * np.ones(action_dim),
-            )
+            # Vectorize action noise if needed
+            if (
+                self.model.action_noise is not None
+                and self.model.env.num_envs > 1
+                and not isinstance(self.model.action_noise, VectorizedActionNoise)
+            ):
+                self.model.action_noise = VectorizedActionNoise(
+                    NormalActionNoise(
+                        mean=np.zeros(action_dim),
+                        sigma=self.action_noise_std
+                        * (((10_000_000 - self.num_timesteps) / 10_000_000) ** 2)
+                        * np.ones(action_dim),
+                    ),
+                    self.model.env.num_envs,
+                )
 
         return self._on_step()
 

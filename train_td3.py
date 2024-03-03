@@ -1,6 +1,8 @@
 import argparse
 import yaml
 import numpy as np
+from stable_baselines3 import TD3
+
 from utils.wrappers import wrap_action_d_plus_a, wrap_action_a
 from utils.heuristics import BaseStockPolicy
 from utils.utils import ROLES
@@ -140,7 +142,7 @@ def main():
             mean=np.zeros(n_actions),
             sigma=params["action_noise_std"] * np.ones(n_actions),
         )
-        model = HgeTD3(
+        model = TD3(
             "MlpPolicy",
             env,
             batch_size=params["batch_size"],
@@ -152,8 +154,8 @@ def main():
             gamma=params["gamma"],
             policy_kwargs=policy_kwargs,
             tensorboard_log=f"./tensorboard/",
-            hge_rate=params["hge_rate_at_start"],
-            heuristic=bsp,
+            # hge_rate=params["hge_rate_at_start"],
+            # heuristic=bsp,
             learning_starts=50000,
         )
 
